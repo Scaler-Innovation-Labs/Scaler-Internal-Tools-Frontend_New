@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+Sitemap: https://localhost:3001/sitemap.xml
+
+# Allow specific crawling
+Allow: /transport
+Allow: /
+
+# Rate limiting
+Crawl-delay: 1 
