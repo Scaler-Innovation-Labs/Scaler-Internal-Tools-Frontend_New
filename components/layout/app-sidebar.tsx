@@ -73,6 +73,7 @@ export const AppSidebar = memo(function AppSidebar({
               {isActive && (
                 <div className="absolute left-0 w-1 h-6 bg-blue-600 dark:bg-blue-400 rounded-r-full" />
               )}
+              
             </Link>
           );
         })}
