@@ -68,6 +68,7 @@ export const AppSidebar = memo(function AppSidebar({
                     ? "text-blue-600 dark:text-blue-400"
                     : "text-gray-400 dark:text-gray-500"
                 }`}
+                
               />
               <span className="font-[var(--font-opensans)] font-bold text-[15px] leading-[100%] tracking-[0%]">{item.label}</span>
               {isActive && (
