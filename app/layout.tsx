@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Open_Sans } from "next/font/google"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
+import { CacheCleanup } from "@/components/cache-cleanup"
 import "./globals.css"
 
 const openSans = Open_Sans({
@@ -69,24 +70,23 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${openSans.variable} light`} suppressHydrationWarning>
+    <html lang="en" className={openSans.variable} suppressHydrationWarning>
       <head>
-        {/* Modern PWA setup */}
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         
-        {/* Modern mobile optimizations */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SST Transport" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${openSans.className} antialiased min-h-screen bg-blue-50 dark:bg-gray-900`} suppressHydrationWarning>
+      <body className={`${openSans.className} antialiased min-h-screen bg-white dark:bg-gray-900`}>
         <ErrorBoundary>
-          <ThemeProvider attribute="class" defaultTheme="light" storageKey={null} enableSystem={false}>
+          <CacheCleanup />
+          <ThemeProvider>
             {children}
           </ThemeProvider>
         </ErrorBoundary>

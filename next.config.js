@@ -158,10 +158,18 @@ const nextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           
-          // Modern caching - no WebSocket cache issues
+          // Disable caching for development
           {
             key: 'Cache-Control',
-            value: 'public, max-age=60, stale-while-revalidate=300',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       },
