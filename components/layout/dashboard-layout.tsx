@@ -1,10 +1,9 @@
 "use client"
 
-import { memo, useState, Suspense, lazy, startTransition, useDeferredValue } from "react"
+import { memo, useState, Suspense, lazy, startTransition } from "react"
 import { CloseIcon } from "@/components/ui/icons"
 import type { DashboardLayoutProps } from "@/types"
 import { AppSidebar } from "./app-sidebar"
-import { createPortal } from "react-dom"
 
 // Modern dynamic imports with React 18+ concurrent features
 const AppHeader = lazy(() => 
@@ -41,13 +40,9 @@ HeaderSkeleton.displayName = 'HeaderSkeleton'
 
 export const DashboardLayout = memo(function DashboardLayout({ 
   children, 
-  activeItem = "transport",
   isBlurred = false
-}: DashboardLayoutProps) {
+}: Omit<DashboardLayoutProps, 'activeItem'>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  
-  // Use React 18 concurrent features for smooth interactions
-  const deferredActiveItem = useDeferredValue(activeItem)
   
   const handleSidebarToggle = () => {
     startTransition(() => {
@@ -84,10 +79,7 @@ export const DashboardLayout = memo(function DashboardLayout({
         >
           <div className="relative h-full bg-white dark:bg-gray-800">
             <Suspense fallback={<SidebarSkeleton />}>
-              <AppSidebar 
-                onClose={handleSidebarClose}
-                activeItem={deferredActiveItem}
-              />
+              <AppSidebar onClose={handleSidebarClose} />
             </Suspense>
             
             {/* Mobile close button with modern interactions */}
