@@ -83,7 +83,7 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${openSans.className} antialiased min-h-screen bg-white dark:bg-gray-900`}>
+      <body className={`${openSans.className} antialiased min-h-screen bg-light-blue dark:bg-[#161616]`}>
         <ErrorBoundary>
           <CacheCleanup />
           <ThemeProvider>

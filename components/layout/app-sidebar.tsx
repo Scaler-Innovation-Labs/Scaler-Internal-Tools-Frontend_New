@@ -90,10 +90,10 @@ export const AppSidebar = memo(function AppSidebar({
       </nav>
 
       {/* Spacer */}
-      <div className="flex-1" />
+      <div className="flex-1 " />
 
       {/* Sign Out Button */}
-      <div className="w-full">
+      <div className="w-full" >
         <button
           onClick={() => {
             // Handle sign out
