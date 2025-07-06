@@ -5,7 +5,7 @@
 @layer base {
   :root {
     /* Modern CSS custom properties with P3 color space support */
-    --background: 0 0% 100%;
+    --background: 213.75 100% 96.86%;  /* This is bg-blue-50 */
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -32,11 +32,11 @@
 
   .dark {
     /* Modern dark mode with enhanced contrast */
-    --background: 222.2 84% 4.9%;
+    --background: 0 0% 8.6%;  /* This is #161616 */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 0 0% 8.6%;  /* This is #161616 */
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 0 0% 8.6%;  /* This is #161616 */
     --popover-foreground: 210 40% 98%;
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 84% 4.9%;
@@ -76,6 +76,10 @@
     text-rendering: optimizeSpeed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  .dark body {
+    background-color: #161616;
   }
   
   /* Modern responsive typography with fluid scaling */

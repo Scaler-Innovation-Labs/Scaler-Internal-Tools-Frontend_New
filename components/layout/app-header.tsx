@@ -2,6 +2,7 @@
 import { memo, useEffect, useState } from "react"
 import { BellIcon, MoonIcon, SunIcon } from "@/components/ui/icons"
 import { useTheme } from "next-themes"
+import { cn } from "@/lib/utils"
 
 interface AppHeaderProps {
   onMenuClick: () => void
@@ -21,7 +22,7 @@ export const AppHeader = memo(function AppHeader({
 
   if (!mounted) {
     return (
-      <div className="flex items-center gap-5 justify-end w-full pt-6 pb-5 pr-8">
+      <div className="flex items-center gap-5 justify-end w-full pt-6 pb-5 pr-8 bg-blue-50 dark:bg-[#161616]">
         {/* Dark Mode Toggle Placeholder */}
         <div className="w-11 h-11 bg-white rounded-full shadow" />
         {/* Other buttons placeholder */}
@@ -32,11 +33,14 @@ export const AppHeader = memo(function AppHeader({
   }
   
   return (
-    <div className="flex items-center gap-5 justify-end w-full pt-6 pb-5 pr-8">
+    <div className="flex items-center gap-5 justify-end w-full pt-6 pb-5 pr-8 bg-blue-50 dark:bg-[#161616]">
       {/* Dark Mode Toggle */}
       <button
         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        className="w-11 h-11 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow hover:bg-gray-100 dark:hover:bg-gray-700"
+        className={cn(
+          "w-11 h-11 flex items-center justify-center rounded-full shadow",
+          "bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800"
+        )}
         aria-label="Toggle theme"
       >
         {theme === 'dark' ? (
@@ -48,13 +52,19 @@ export const AppHeader = memo(function AppHeader({
       {/* Notification Icon */}
       <button
         onClick={onNotificationClick}
-        className="w-11 h-11 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow hover:bg-gray-100 dark:hover:bg-gray-700"
+        className={cn(
+          "w-11 h-11 flex items-center justify-center rounded-full shadow",
+          "bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800"
+        )}
         aria-label="Notifications"
       >
         <BellIcon className="h-[22px] w-[22px]" />
       </button>
       {/* Profile */}
-      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1.5">
+      <div className={cn(
+        "flex items-center gap-2 rounded-full shadow px-3 py-1.5",
+        "bg-white/80 dark:bg-gray-800/80"
+      )}>
         <span className="text-base font-semibold text-gray-900 dark:text-gray-100">Adeola Ayo</span>
       </div>
     </div>

@@ -40,9 +40,8 @@ function NavLink({ href, isActive, onClick, children }: {
         "flex flex-row items-center gap-3 w-full py-2 px-3 rounded-lg transition-all cursor-pointer",
         "font-opensans font-bold text-[15px] leading-[100%] tracking-[0%]",
         {
-          "bg-blue-50 text-blue-700 dark:text-blue-400": isActive,
-          "text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-gray-700/50": !isActive,
-          "relative": href === "/transport"
+          "bg-blue-50 text-blue-700 dark:bg-gray-800 dark:text-blue-400": isActive,
+          "text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-gray-800 dark:hover:text-blue-400": !isActive
         }
       )}
     >
@@ -59,7 +58,7 @@ export const AppSidebar = memo(function AppSidebar({
   const pathname = usePathname();
 
   return (
-    <div className="h-full flex flex-col items-center bg-white dark:bg-gray-800 rounded-tr-5xl rounded-br-5xl w-[250px] py-4 px-3">
+    <div className="h-full flex flex-col items-center bg-white dark:bg-black w-[250px] py-4 px-3 rounded-tr-3xl rounded-br-3xl">
       {/* Logo */}
       <div className="flex items-center justify-center w-full mb-15 mt-2">
         <LogoIcon size={180} className="shrink-0" />
@@ -85,9 +84,6 @@ export const AppSidebar = memo(function AppSidebar({
                 })}
               />
               <span>{item.label}</span>
-              {isActive && (
-                <div className="absolute left-0 w-1 h-6 bg-blue-600 dark:bg-blue-400 rounded-r-full" />
-              )}
             </NavLink>
           );
         })}
