@@ -85,8 +85,7 @@ export default function RootLayout({
       </head>
       <body className={`${openSans.className} antialiased min-h-screen bg-light-blue dark:bg-[#161616]`}>
         <ErrorBoundary>
-          <CacheCleanup />
-          <ThemeProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" storageKey={null} enableSystem={false}>
             {children}
           </ThemeProvider>
         </ErrorBoundary>

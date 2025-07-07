@@ -1,10 +1,6 @@
-"use client"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { redirect } from "next/navigation";
 
-export default function HomePage() {
-  return (
-    <DashboardLayout activeItem="home">
-      <h1>Default Page</h1>
-    </DashboardLayout>
-  )
+export default function Home() {
+  redirect("/login");
+  return null;
 }
