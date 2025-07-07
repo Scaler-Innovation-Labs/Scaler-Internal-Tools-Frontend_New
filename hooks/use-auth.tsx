@@ -126,7 +126,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const timer = setTimeout(() => {
       refreshSession();
     }, 100);
-    return () => clearTimeout(timer);
+
+    // Set up interval to refresh access token every 14 minutes (before 15 min expiry)
+    const refreshInterval = setInterval(() => {
+      refreshSession();
+    }, 14 * 60 * 1000); // 14 minutes
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   const login = () => {
