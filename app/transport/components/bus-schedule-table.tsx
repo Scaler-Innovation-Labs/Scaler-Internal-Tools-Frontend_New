@@ -16,7 +16,7 @@ export function BusScheduleTable({ schedules }: BusScheduleTableProps) {
         {schedules.map((schedule, index) => (
           <article
             key={`mobile-${index}`}
-            className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 w-[95%] mx-auto"
+            className="bg-white dark:bg-black rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 w-[95%] mx-auto"
             aria-label={`Bus schedule for ${schedule.date}`}
           >
             {/* Date and Day Header */}
@@ -87,7 +87,7 @@ export function BusScheduleTable({ schedules }: BusScheduleTableProps) {
       <div className="hidden md:block overflow-x-auto" role="region" aria-label="Bus schedule table">
         <table className="min-w-full" role="table">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+            <tr className="bg-gray-50 dark:bg-black border-b border-gray-200 dark:border-gray-600">
               <th className="px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
                 Date
               </th>

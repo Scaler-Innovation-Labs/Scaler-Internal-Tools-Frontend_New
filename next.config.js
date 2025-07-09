@@ -16,10 +16,13 @@ const nextConfig = {
       },
     },
     
-    // Modern caching
-    staleTimes: {
+    // Modern caching - adjusted for development
+    staleTimes: process.env.NODE_ENV === 'production' ? {
       dynamic: 30,
       static: 180,
+    } : {
+      dynamic: 0,
+      static: 0,
     },
   },
 
@@ -39,9 +42,9 @@ const nextConfig = {
   // Modern image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
+    minimumCacheTTL: process.env.NODE_ENV === 'production' ? 60 * 60 * 24 * 365 : 0, // Adjusted for dev
     dangerouslyAllowSVG: false,
-    unoptimized: false,
+    unoptimized: process.env.NODE_ENV === 'development',
     
     // Modern responsive images
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
@@ -59,7 +62,7 @@ const nextConfig = {
 
   // Modern webpack 5 optimizations
   webpack: (config, { dev, isServer }) => {
-    // Modern bundle optimization
+    // Skip production optimizations in development
     if (!dev && !isServer) {
       config.optimization = {
         ...config.optimization,
@@ -74,8 +77,8 @@ const nextConfig = {
         // Modern code splitting
         splitChunks: {
           chunks: 'all',
-          minSize: 10000, // 10KB
-          maxSize: 30000, // 30KB
+          minSize: 10000,
+          maxSize: 30000,
           minRemainingSize: 0,
           minChunks: 1,
           maxAsyncRequests: 30,
@@ -83,7 +86,6 @@ const nextConfig = {
           enforceSizeThreshold: 50000,
           
           cacheGroups: {
-            // React chunks
             react: {
               test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
               name: 'react',
@@ -92,7 +94,6 @@ const nextConfig = {
               enforce: true,
             },
             
-            // Vendor chunks
             vendor: {
               test: /[\\/]node_modules[\\/]/,
               name: 'vendors',
@@ -101,7 +102,6 @@ const nextConfig = {
               maxSize: 20000,
             },
             
-            // Common chunks
             common: {
               name: 'common',
               minChunks: 2,
@@ -113,12 +113,12 @@ const nextConfig = {
           },
         },
       }
+    }
 
-      // Modern module resolution
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@': require('path').resolve(__dirname),
-      }
+    // Modern module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname),
     }
 
     // Modern file handling
@@ -132,7 +132,7 @@ const nextConfig = {
 
   // Modern headers with latest security and performance
   async headers() {
-    return [
+    const headers = [
       {
         source: '/(.*)',
         headers: [
@@ -157,42 +157,60 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
-          
-          // Modern caching - no WebSocket cache issues
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=60, stale-while-revalidate=300',
-          },
-        ],
-      },
-      {
-        source: '/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/fonts/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
         ],
       },
     ]
+
+    // Add caching headers only in production
+    if (process.env.NODE_ENV === 'production') {
+      headers.push(
+        {
+          source: '/static/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/_next/static/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/fonts/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        }
+      )
+    } else {
+      // Development-specific headers to prevent caching
+      headers[0].headers.push(
+        {
+          key: 'Cache-Control',
+          value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+        {
+          key: 'Pragma',
+          value: 'no-cache',
+        },
+        {
+          key: 'Expires',
+          value: '0',
+        }
+      )
+    }
+
+    return headers
   },
 }
 

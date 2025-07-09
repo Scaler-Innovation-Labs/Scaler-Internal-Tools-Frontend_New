@@ -1,10 +1,9 @@
 "use client"
 
-import { memo, useState, Suspense, lazy, startTransition, useDeferredValue } from "react"
+import { memo, useState, Suspense, lazy, startTransition } from "react"
 import { CloseIcon } from "@/components/ui/icons"
 import type { DashboardLayoutProps } from "@/types"
 import { AppSidebar } from "./app-sidebar"
-import { createPortal } from "react-dom"
 
 // Modern dynamic imports with React 18+ concurrent features
 const AppHeader = lazy(() => 
@@ -15,8 +14,8 @@ const AppHeader = lazy(() =>
 
 // Ultra-lightweight skeleton components for instant rendering
 const SidebarSkeleton = memo(() => (
-  <div className="w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-    <div className="h-16 border-b border-gray-100 dark:border-gray-700 flex items-center px-6">
+  <div className="w-64 h-full bg-white dark:bg-black rounded-tr-3xl rounded-br-3xl">
+    <div className="h-16 flex items-center px-6">
       <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg mr-3 animate-pulse"></div>
       <div className="w-24 h-4 bg-gray-200 dark:bg-gray-600 rounded animate-pulse"></div>
     </div>
@@ -28,7 +27,7 @@ const SidebarSkeleton = memo(() => (
 ))
 
 const HeaderSkeleton = memo(() => (
-  <div className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4">
+  <div className="h-16 flex items-center px-4">
     <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded lg:hidden animate-pulse"></div>
     <div className="flex-1"></div>
     <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full animate-pulse"></div>
@@ -41,13 +40,9 @@ HeaderSkeleton.displayName = 'HeaderSkeleton'
 
 export const DashboardLayout = memo(function DashboardLayout({ 
   children, 
-  activeItem = "transport",
   isBlurred = false
-}: DashboardLayoutProps) {
+}: Omit<DashboardLayoutProps, 'activeItem'>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  
-  // Use React 18 concurrent features for smooth interactions
-  const deferredActiveItem = useDeferredValue(activeItem)
   
   const handleSidebarToggle = () => {
     startTransition(() => {
@@ -63,7 +58,7 @@ export const DashboardLayout = memo(function DashboardLayout({
 
   return (
     <>
-      <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="flex h-screen">
         {/* Mobile overlay with modern backdrop */}
         {isSidebarOpen && (
           <div 
@@ -79,22 +74,23 @@ export const DashboardLayout = memo(function DashboardLayout({
             fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-out lg:relative lg:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             ${isBlurred ? 'blur-sm' : ''}
+            rounded-tr-3xl rounded-br-3xl overflow-hidden
           `}
-          style={{ contentVisibility: 'auto', containIntrinsicSize: '256px 100vh' }}
+          style={{ 
+            contentVisibility: 'auto', 
+            containIntrinsicSize: '256px 100vh'
+          }}
         >
-          <div className="relative h-full bg-white dark:bg-gray-800">
+          <div className="relative h-full bg-white dark:bg-black rounded-tr-3xl rounded-br-3xl">
             <Suspense fallback={<SidebarSkeleton />}>
-              <AppSidebar 
-                onClose={handleSidebarClose}
-                activeItem={deferredActiveItem}
-              />
+              <AppSidebar onClose={handleSidebarClose} />
             </Suspense>
             
             {/* Mobile close button with modern interactions */}
             {isSidebarOpen && (
               <button
                 onClick={handleSidebarClose}
-                className="absolute top-4 right-4 p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:hidden transition-all duration-200"
+                className="absolute top-4 right-4 p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 lg:hidden transition-all duration-200"
                 aria-label="Close sidebar"
               >
                 <CloseIcon size={20} />

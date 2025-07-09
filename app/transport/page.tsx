@@ -19,11 +19,11 @@ const ImportantNotes = lazy(() =>
 
 // Ultra-optimized skeleton components for instant rendering
 const TableSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md min-h-[300px]" />
+  <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md min-h-[300px]" />
 )
 
 const NotesSkeleton = () => (
-  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 flex items-center min-h-[80px]">
+  <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-2xl p-6 flex items-center min-h-[80px]">
     <div className="w-1.5 h-12 bg-purple-600 rounded-l-2xl mr-4" />
     <div className="flex-1 space-y-2">
       <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
@@ -36,8 +36,8 @@ export default function TransportPage() {
   const todayLong = format(new Date(), 'd MMMM yyyy')
   
   return (
-    <DashboardLayout activeItem="transport">
-      <div className="min-h-screen bg-blue-50 dark:bg-gray-900 flex flex-col items-center py-0">
+    <DashboardLayout>
+      <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
         {/* Gradient Header */}
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto mt-23">
           <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
@@ -55,7 +55,7 @@ export default function TransportPage() {
         <div className="h-6" aria-hidden="true"></div>
         {/* Main Card */}
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto z-10 mb-12">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-0 sm:p-0 border border-gray-100 dark:border-gray-700 flex flex-col">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-lg p-0 sm:p-0 border border-gray-100 dark:border-gray-700 flex flex-col">
             {/* Table Section */}
             <div className="px-10 pt-10 pb-2 min-w-full text-sm">
               <Suspense fallback={<TableSkeleton />}>
