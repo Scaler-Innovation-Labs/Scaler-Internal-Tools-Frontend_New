@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import { config } from "../lib/config";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -33,16 +34,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       setError(null);
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
       const refreshToken = getCookieValue('refreshToken');
       if (!refreshToken) {
         setAccessToken(null);
         setError('No refresh token found. Please log in again.');
         return false;
       }
+
       let res;
       try {
-        res = await fetch(`${backendUrl}/auth/refresh`, {
+        res = await fetch(`${config.api.backendUrl}/auth/refresh`, {
           method: "POST",
           credentials: "include",
           headers: { 
@@ -51,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         });
       } catch (fetchErr) {
+        console.error('Network error:', fetchErr);
         setAccessToken(null);
         setError('Network error: Failed to reach authentication server.');
         return false;
@@ -61,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAccessToken(data.accessToken);
         return true;
       } else {
+        console.error('Refresh failed:', res.status);
         setAccessToken(null);
         setError('Failed to refresh authentication. Please log in again.');
         return false;
@@ -100,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (refreshSuccess && accessToken) {
           // Retry with new token
-          return makeRequest(accessToken!);
+          return makeRequest(accessToken);
         } else {
           // Refresh failed, redirect to login
           window.location.href = '/login';
@@ -113,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // No access token, try refresh first
       const refreshSuccess = await refreshSession();
       if (refreshSuccess && accessToken) {
-        return makeRequest(accessToken!);
+        return makeRequest(accessToken);
       } else {
         window.location.href = '/login';
         throw new Error('No valid authentication');
@@ -122,10 +125,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Delay the refresh to prevent hydration mismatch
-    const timer = setTimeout(() => {
-      refreshSession();
-    }, 100);
+    const initializeAuth = async () => {
+      // Check for access token in cookie first
+      const cookieToken = getCookieValue('accessToken');
+      if (cookieToken) {
+        setAccessToken(cookieToken);
+        return;
+      }
+
+      // If no access token in cookie, try to refresh
+      await refreshSession();
+    };
+
+    // Initialize auth state
+    initializeAuth();
 
     // Set up interval to refresh access token every 14 minutes (before 15 min expiry)
     const refreshInterval = setInterval(() => {
@@ -133,21 +146,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, 14 * 60 * 1000); // 14 minutes
 
     return () => {
-      clearTimeout(timer);
       clearInterval(refreshInterval);
     };
   }, []);
 
   const login = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-    window.location.href = `${backendUrl}/login/oauth2/google`;
+    const backendUrl = config.api.backendUrl;
+    window.location.href = `${backendUrl}/oauth2/authorization/google`;
   };
 
   const logout = async () => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
       const refreshToken = getCookieValue('refreshToken');
-      await fetch(`${backendUrl}/auth/logout`, {
+      await fetch(`${config.api.backendUrl}/auth/logout`, {
         method: "POST",
         credentials: "include",
         headers: { 

@@ -89,6 +89,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </ErrorBoundary>
+        <CacheCleanup />
       </body>
     </html>
   )

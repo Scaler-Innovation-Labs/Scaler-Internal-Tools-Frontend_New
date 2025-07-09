@@ -212,6 +212,20 @@ const nextConfig = {
 
     return headers
   },
+
+  // Add rewrite rules for OAuth2 callback
+  async rewrites() {
+    return [
+      {
+        source: '/oauth2/authorization/:path*',
+        destination: 'http://localhost:8000/oauth2/authorization/:path*',
+      },
+      {
+        source: '/login/oauth2/code/:path*',
+        destination: 'http://localhost:8000/login/oauth2/code/:path*',
+      }
+    ]
+  },
 }
 
 module.exports = nextConfig 

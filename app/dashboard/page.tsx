@@ -1,33 +1,19 @@
-"use client";
-import { useEffect, useState } from "react";
-import ClientLayout from "../client-layout";
-import LoginPage from "../auth/login";
-import { useAuth } from "../../hooks/use-auth";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import ClientLayout from "../client-layout";
 
-export default function DashboardPage() {
-  const { accessToken, isLoading } = useAuth();
-  const [isClient, setIsClient] = useState(false);
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken");
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient || isLoading) {
-    return null;
-  }
-
-  if (!accessToken) {
-    return (
-      <ClientLayout>
-        <LoginPage />
-      </ClientLayout>
-    );
+  if (!refreshToken?.value) {
+    redirect("/login");
   }
   
   return (
     <ClientLayout>
-      <DashboardLayout activeItem="home">
+      <DashboardLayout>
         <div className="p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h1>
           <p className="text-gray-600">Welcome to your dashboard!</p>
