@@ -3,6 +3,7 @@ import { memo, useEffect, useState } from "react"
 import { BellIcon, MoonIcon, SunIcon } from "@/components/ui/icons"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
+import { useUser } from "@/hooks/use-user"
 
 interface AppHeaderProps {
   onMenuClick: () => void
@@ -15,10 +16,12 @@ export const AppHeader = memo(function AppHeader({
 }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const { userData, isLoading, fetchUserData } = useUser()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    fetchUserData()
+  }, [fetchUserData])
 
   if (!mounted) {
     return (
@@ -62,10 +65,27 @@ export const AppHeader = memo(function AppHeader({
       </button>
       {/* Profile */}
       <div className={cn(
-        "flex items-center gap-2 rounded-full shadow px-3 py-1.5",
+        "flex flex-col items-end gap-1 rounded-full shadow px-3 py-1.5",
         "bg-white/80 dark:bg-gray-800/80"
       )}>
-        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">Adeola Ayo</span>
+        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          {userData?.username || 'Loading...'}
+        </span>
+        {userData?.userRoles && (
+          <div className="flex gap-1">
+            {userData.userRoles.map((role, index) => (
+              <span
+                key={role}
+                className={cn(
+                  "text-xs px-2 py-0.5 rounded-full",
+                  "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                )}
+              >
+                {role.toLowerCase()}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

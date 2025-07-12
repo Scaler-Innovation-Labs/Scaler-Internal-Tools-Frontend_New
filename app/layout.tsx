@@ -3,6 +3,7 @@ import { Open_Sans } from "next/font/google"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CacheCleanup } from "@/components/cache-cleanup"
+import ClientLayout from "./client-layout"
 import "./globals.css"
 
 const openSans = Open_Sans({
@@ -86,7 +87,9 @@ export default function RootLayout({
       <body className={`${openSans.className} antialiased min-h-screen bg-light-blue dark:bg-[#161616]`}>
         <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="light" storageKey={null} enableSystem={false}>
-            {children}
+            <ClientLayout>
+              {children}
+            </ClientLayout>
           </ThemeProvider>
         </ErrorBoundary>
         <CacheCleanup />

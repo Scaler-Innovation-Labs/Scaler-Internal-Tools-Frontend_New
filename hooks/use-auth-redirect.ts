@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from './use-auth';
 
 interface UseAuthRedirectProps {
   whenAuthenticated?: string;
@@ -11,79 +12,45 @@ interface UseAuthRedirectProps {
 export function useAuthRedirect({ whenAuthenticated = '/dashboard', whenNotAuthenticated = '/login' }: UseAuthRedirectProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isChecking, setIsChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
 
-  const checkAuth = useCallback(async () => {
+  useEffect(() => {
     // Don't redirect if we're already on the target page
     if ((whenAuthenticated && pathname === whenAuthenticated) || 
         (whenNotAuthenticated && pathname === whenNotAuthenticated)) {
       console.log('Already on target page:', pathname);
-      setIsChecking(false);
+      return;
+    }
+
+    // Don't redirect while loading
+    if (isLoading) {
+      console.log('Auth state is loading, waiting...');
       return;
     }
 
     console.log('Checking authentication status...', {
       currentPath: pathname,
       whenAuthenticated,
-      whenNotAuthenticated
+      whenNotAuthenticated,
+      isAuthenticated
     });
 
-    try {
-      console.log('Making request to verify endpoint...');
-      const response = await fetch('http://localhost:8000/api/auth/verify', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
-
-      console.log('Verify response status:', response.status);
-      const data = await response.json();
-      console.log('Verify response data:', data);
-
-      if (response.ok && data.authenticated) {
-        console.log('User is authenticated');
-        setIsAuthenticated(true);
-        
-        if (whenAuthenticated && pathname !== whenAuthenticated) {
-          console.log('Redirecting to:', whenAuthenticated);
-          router.replace(whenAuthenticated);
-        } else {
-          console.log('No redirect needed for authenticated user');
-        }
+    if (isAuthenticated) {
+      if (whenAuthenticated && pathname !== whenAuthenticated) {
+        console.log('User is authenticated, redirecting to:', whenAuthenticated);
+        router.replace(whenAuthenticated);
       } else {
-        console.log('User is not authenticated');
-        setIsAuthenticated(false);
-        
-        if (whenNotAuthenticated && pathname !== whenNotAuthenticated) {
-          console.log('Redirecting to:', whenNotAuthenticated);
-          router.replace(whenNotAuthenticated);
-        } else {
-          console.log('No redirect needed for unauthenticated user');
-        }
+        console.log('No redirect needed for authenticated user');
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setIsAuthenticated(false);
-      
+    } else {
       if (whenNotAuthenticated && pathname !== whenNotAuthenticated) {
-        console.log('Error occurred, redirecting to:', whenNotAuthenticated);
+        console.log('User is not authenticated, redirecting to:', whenNotAuthenticated);
         router.replace(whenNotAuthenticated);
+      } else {
+        console.log('No redirect needed for unauthenticated user');
       }
-    } finally {
-      setIsChecking(false);
     }
-  }, [router, pathname, whenAuthenticated, whenNotAuthenticated]);
+  }, [router, pathname, whenAuthenticated, whenNotAuthenticated, isAuthenticated, isLoading]);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      checkAuth();
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [checkAuth]);
-
-  return { isChecking, isAuthenticated };
+  return { isLoading, isAuthenticated };
 } 
