@@ -81,13 +81,13 @@ export default function LoginPage() {
             </div>
 
             {/* Error Display */}
-            {(error || (urlError && urlError !== "refresh_failed")) && (
+            {((error && !String(error).includes("No refresh token found")) || (urlError && urlError !== "refresh_failed")) && (
               <div className="w-full mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
                 {urlError === "oauth_error" && "OAuth authentication failed. Please try again."}
                 {urlError === "no_code" && "Authentication code not received. Please try again."}
                 {urlError === "callback_error" && "Authentication callback error. Please try again."}
-                {error && !urlError && error}
-                {!urlError && !error && "An authentication error occurred. Please try again."}
+                {error && !urlError && !String(error).includes("No refresh token found") && error}
+                {!urlError && error && !String(error).includes("No refresh token found") && "An authentication error occurred. Please try again."}
               </div>
             )}
 
