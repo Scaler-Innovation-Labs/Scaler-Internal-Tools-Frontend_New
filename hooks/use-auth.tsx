@@ -7,6 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  userRoles: string[];
   login: () => void;
   logout: () => Promise<void>;
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
@@ -18,22 +19,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshPromise, setRefreshPromise] = useState<Promise<boolean> | null>(null);
+  const [lastAuthCheck, setLastAuthCheck] = useState(0);
+  const [refreshDebounceTimeout, setRefreshDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Refresh token
   const refreshToken = async (): Promise<boolean> => {
     if (isRefreshing) {
-      console.log('🔄 Already refreshing, waiting for existing refresh to complete...');
       return refreshPromise!.then(() => true).catch(() => false);
     }
 
     try {
-      console.log('🔄 Starting token refresh...');
       setIsRefreshing(true);
       const newPromise = new Promise<boolean>(async (resolve, reject) => {
         try {
-          console.log('📤 Making refresh request to:', `${config.api.backendUrl}/auth/refresh`);
           const response = await fetch(`${config.api.backendUrl}/auth/refresh`, {
             method: 'POST',
             credentials: 'include',
@@ -42,64 +43,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           });
 
-          // Log response headers
-          console.log('📥 Refresh response status:', response.status);
-          console.log('📥 Refresh response headers:', {
-            'content-type': response.headers.get('content-type'),
-            'set-cookie': response.headers.get('set-cookie')
-          });
-
-          // Get the response body
-          const text = await response.text();
-          console.log('📥 Refresh response body:', text);
+          // If refresh token is missing or invalid, response will be 401
+          if (response.status === 401) {
+            setIsAuthenticated(false);
+            setUserRoles([]);
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+              window.location.href = '/login';
+            }
+            resolve(false);
+            return;
+          }
 
           if (!response.ok) {
-            if (response.status === 400 || response.status === 401) {
-              console.log('❌ Refresh token is invalid or missing');
-              throw new Error('Invalid refresh token');
+            setIsAuthenticated(false);
+            setUserRoles([]);
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+              window.location.href = '/login';
             }
-            throw new Error(`Token refresh failed: ${text}`);
+            resolve(false);
+            return;
           }
 
-          // Log cookies after refresh
-          console.log('🍪 Current cookies:', document.cookie);
-
-          // Wait a moment for cookies to be set
-          console.log('⏳ Waiting for cookies to be set...');
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-          // Log cookies after waiting
-          console.log('🍪 Cookies after waiting:', document.cookie);
-
-          // Verify the new tokens work
-          console.log('🔍 Verifying new tokens...');
-          const verifyResponse = await fetch(`${config.api.backendUrl}/api/auth/verify`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          console.log('📥 Verify response status:', verifyResponse.status);
-          const verifyData = await verifyResponse.json();
-          console.log('📥 Verify response data:', verifyData);
-
-          if (!verifyResponse.ok || !verifyData.authenticated) {
-            console.log('❌ New tokens verification failed');
-            throw new Error('Token verification failed after refresh');
-          }
-
-          console.log('✅ Token refresh successful and verified');
+          // Update last auth check time
+          setLastAuthCheck(Date.now());
           resolve(true);
         } catch (error) {
-          console.error('❌ Token refresh error:', error);
           setIsAuthenticated(false);
-          reject(error);
+          setUserRoles([]);
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+            window.location.href = '/login';
+          }
+          resolve(false);
         }
       });
 
       setRefreshPromise(newPromise);
       return await newPromise;
     } finally {
-      console.log('🔄 Refresh process complete');
       setIsRefreshing(false);
       setRefreshPromise(null);
     }
@@ -107,89 +87,139 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Check authentication status
   const checkAuth = async () => {
+    // Skip auth check on login and callback pages
+    if (typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/auth/callback'))) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      console.log('🔍 Checking auth status...');
-      const response = await fetch(`${config.api.backendUrl}/api/auth/verify`, {
+      const response = await fetch(`${config.api.backendUrl}/auth/verify`, {
         method: 'GET',
         credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
       });
-
-      console.log('📥 Auth check response status:', response.status);
       
       if (response.status === 401) {
-        console.log('🔄 Auth check returned 401, attempting token refresh...');
         const refreshSuccessful = await refreshToken();
         if (!refreshSuccessful) {
-          console.log('❌ Token refresh failed during auth check');
           setIsAuthenticated(false);
-          setError('Authentication failed');
+          setUserRoles([]);
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+            window.location.href = '/login';
+          }
           return;
         }
-        // Verify auth again after refresh
-        console.log('🔍 Verifying auth after refresh...');
-        const retryResponse = await fetch(`${config.api.backendUrl}/api/auth/verify`, {
-          method: 'GET',
-          credentials: 'include',
-        });
         
-        if (!retryResponse.ok) {
-          console.log('❌ Auth verification failed after refresh');
-          setIsAuthenticated(false);
-          setError('Authentication failed');
-          return;
-        }
-
-        const retryData = await retryResponse.json();
-        console.log('📥 Retry verify response:', retryData);
-        setIsAuthenticated(retryData.authenticated === true);
-        setError(null);
+        // Update last auth check time
+        setLastAuthCheck(Date.now());
+        setIsAuthenticated(true);
+        await fetchUserData();
         return;
       }
 
       if (!response.ok) {
-        console.log('❌ Auth check failed with status:', response.status);
         setIsAuthenticated(false);
-        setError('Authentication check failed');
+        setUserRoles([]);
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+          window.location.href = '/login';
+        }
         return;
       }
 
       const data = await response.json();
-      console.log('📥 Auth check response:', data);
       setIsAuthenticated(data.authenticated === true);
       setError(null);
+      
+      // Update last auth check time
+      setLastAuthCheck(Date.now());
+      
+      // Fetch user data if authenticated
+      if (data.authenticated === true) {
+        await fetchUserData();
+      } else {
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+          window.location.href = '/login';
+        }
+      }
     } catch (err) {
-      console.error('❌ Auth check failed:', err);
       setIsAuthenticated(false);
-      setError('Authentication check failed');
+      setUserRoles([]);
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+        window.location.href = '/login';
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Fetch user data including roles
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`${config.api.backendUrl}/user/whoAmI`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUserRoles(userData.userRoles || []);
+      } else {
+        setUserRoles([]);
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setUserRoles([]);
+    }
+  };
+
+  // Check if token needs refresh (older than 55 minutes)
+  const shouldRefreshToken = () => {
+    const tokenAge = Date.now() - lastAuthCheck;
+    return tokenAge > 55 * 60 * 1000; // 55 minutes
+  };
+
   // Fetch with automatic token refresh
   const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const fetchWithRetry = async (): Promise<Response> => {
-      console.log('📤 Making authenticated request to:', url);
+    // Skip auth check for auth-related endpoints
+    if (url.includes('/auth/') || url.includes('/login')) {
+      return fetch(url, {
+        ...options,
+        credentials: 'include',
+      });
+    }
+
+    // Clear any pending refresh check
+    if (refreshDebounceTimeout) {
+      clearTimeout(refreshDebounceTimeout);
+      setRefreshDebounceTimeout(null);
+    }
+
+    try {
+      // Make the request
       const response = await fetch(url, {
         ...options,
         credentials: 'include',
       });
 
-      console.log('📥 Response status:', response.status);
-
+      // Handle 401 response
       if (response.status === 401) {
-        console.log('🔄 Request returned 401, attempting token refresh...');
         const refreshSuccessful = await refreshToken();
         if (!refreshSuccessful) {
-          console.log('❌ Token refresh failed, redirecting to login...');
           setIsAuthenticated(false);
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
             window.location.href = '/login';
           }
           throw new Error('Authentication failed');
         }
-        // Retry the original request
-        console.log('🔄 Retrying original request after refresh');
+
+        // Retry the original request once
         return fetch(url, {
           ...options,
           credentials: 'include',
@@ -197,47 +227,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       return response;
-    };
-
-    try {
-      return await fetchWithRetry();
     } catch (error) {
-      console.error('❌ Request failed:', error);
+      console.error('Error in fetchWithAuth:', error);
       throw error;
     }
   };
 
   // Initialize auth state
   useEffect(() => {
-    console.log('🔄 Initializing auth state...');
+    // Skip initial auth check on login and callback pages
+    if (typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/auth/callback'))) {
+      setIsLoading(false);
+      return;
+    }
     checkAuth();
-
-    // Check auth status every minute
-    const interval = setInterval(() => {
-      console.log('⏰ Running periodic auth check...');
-      checkAuth();
-    }, 60 * 1000);
-    
-    return () => clearInterval(interval);
   }, []);
 
   const login = () => {
-    console.log('🔀 Redirecting to Google OAuth...');
     window.location.href = `${config.api.backendUrl}/oauth2/authorization/google`;
   };
 
   const logout = async () => {
     try {
-      console.log('🚪 Logging out...');
       await fetch(`${config.api.backendUrl}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
     } catch (err) {
-      console.error('❌ Logout failed:', err);
+      console.error('Logout failed:', err);
     } finally {
       setIsAuthenticated(false);
-      console.log('🔀 Redirecting to login after logout...');
+      setUserRoles([]);
       window.location.href = '/login';
     }
   };
@@ -247,9 +267,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated,
       isLoading,
       error,
+      userRoles,
       login,
       logout,
-      fetchWithAuth,
+      fetchWithAuth
     }}>
       {children}
     </AuthContext.Provider>
@@ -258,8 +279,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

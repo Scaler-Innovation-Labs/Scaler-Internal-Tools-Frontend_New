@@ -10,22 +10,70 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      try {
+      try { 
         // Check for OAuth2 error parameters
         const errorParam = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
         if (errorParam) {
           console.error('OAuth error:', errorParam, errorDescription);
-          setError(errorDescription || `Authentication error: ${errorParam}`);
+          // Handle domain-specific errors
+          if (errorDescription?.includes('Invalid domain')) {
+            setError('Only @sst.scaler.com and @scaler.com domains are allowed');
+          } else {
+            setError(errorDescription || `Authentication error: ${errorParam}`);
+          }
           setTimeout(() => router.replace('/login'), 3000);
           return;
         }
 
+        // Wait a short moment to ensure cookies are set
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Verify authentication with backend
-        const response = await fetch(`${config.api.backendUrl}/api/auth/verify`, {
+        const response = await fetch(`${config.api.backendUrl}/auth/verify`, {
           method: 'GET',
           credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
         });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Try refreshing token
+            const refreshResponse = await fetch(`${config.api.backendUrl}/auth/refresh`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Accept': 'application/json',
+              }
+            });
+
+            if (!refreshResponse.ok) {
+              throw new Error('Token refresh failed');
+            }
+
+            // Retry verification after refresh
+            const retryResponse = await fetch(`${config.api.backendUrl}/auth/verify`, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Accept': 'application/json',
+              }
+            });
+
+            if (!retryResponse.ok) {
+              throw new Error('Authentication failed after token refresh');
+            }
+
+            const retryData = await retryResponse.json();
+            if (retryData.authenticated) {
+              router.replace('/dashboard');
+              return;
+            }
+          }
+          throw new Error('Authentication failed');
+        }
 
         const data = await response.json();
         if (data.authenticated) {

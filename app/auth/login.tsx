@@ -70,7 +70,7 @@ export default function LoginPage() {
                 Glad you’re back.!
               </p>
               {/* Error Display */}
-              {(error || urlError) && (
+              {urlError && (
                 <div className="w-full mb-4 p-3 bg-red-100 border border-red-200 rounded-lg">
                   <p className="text-red-700 text-sm text-center font-medium">
                     {urlError === "oauth_error" &&
@@ -78,11 +78,13 @@ export default function LoginPage() {
                     {urlError === "no_code" &&
                       "Authentication code not received. Please try again."}
                     {urlError === "refresh_failed" &&
-                      "Session refresh failed. Please log in again."}
+                      "Please log in to continue."}
                     {urlError === "callback_error" &&
                       "Authentication callback error. Please try again."}
-                    {error && !urlError && error}
-                    {!urlError && !error &&
+                    {urlError !== "oauth_error" && 
+                     urlError !== "no_code" && 
+                     urlError !== "refresh_failed" && 
+                     urlError !== "callback_error" &&
                       "An authentication error occurred. Please try again."}
                   </p>
                 </div>

@@ -223,6 +223,10 @@ const nextConfig = {
       {
         source: '/login/oauth2/code/:path*',
         destination: 'http://localhost:8000/login/oauth2/code/:path*',
+      },
+      {
+        source: '/transport/schedule/:path*',
+        destination: 'http://localhost:8000/transport/schedule/:path*',
       }
     ]
   },

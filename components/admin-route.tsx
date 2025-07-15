@@ -3,19 +3,25 @@
 import { useAuth } from "../hooks/use-auth";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { hasAdminRole } from "../lib/utils";
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+export default function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { userRoles, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ["/login", "/auth/callback"];
+  const adminPaths = ["/transportadmin"];
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !publicPaths.includes(pathname)) {
-      router.replace("/login");
+    if (!isLoading) {
+      const isAdminPath = adminPaths.some(path => pathname.startsWith(path));
+      
+      if (isAdminPath && !hasAdminRole(userRoles)) {
+        console.log('🚫 Access denied: User does not have admin role');
+        router.replace("/dashboard");
+      }
     }
-  }, [isAuthenticated, pathname, router, isLoading]);
+  }, [userRoles, pathname, router, isLoading]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -29,10 +35,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  // Don't render anything while redirecting to login
-  if (!isAuthenticated && !publicPaths.includes(pathname)) {
+  // Don't render anything while redirecting
+  const isAdminPath = adminPaths.some(path => pathname.startsWith(path));
+  if (isAdminPath && !hasAdminRole(userRoles)) {
     return null;
   }
 
   return <>{children}</>;
-}
+} 

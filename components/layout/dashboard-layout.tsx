@@ -4,15 +4,15 @@ import { memo, useState, Suspense, lazy, startTransition } from "react"
 import { CloseIcon } from "@/components/ui/icons"
 import type { DashboardLayoutProps } from "@/types"
 import { AppSidebar } from "./app-sidebar"
+import { useModal } from "@/contexts/modal-context"
+import { cn } from "@/lib/utils"
 
-// Modern dynamic imports with React 18+ concurrent features
 const AppHeader = lazy(() => 
   import("./app-header").then(module => ({ 
     default: module.AppHeader 
   }))
 )
 
-// Ultra-lightweight skeleton components for instant rendering
 const SidebarSkeleton = memo(() => (
   <div className="w-64 h-full bg-white dark:bg-black rounded-tr-3xl rounded-br-3xl">
     <div className="h-16 flex items-center px-6">
@@ -34,15 +34,14 @@ const HeaderSkeleton = memo(() => (
   </div>
 ))
 
-// Set display names for better debugging
 SidebarSkeleton.displayName = 'SidebarSkeleton'
 HeaderSkeleton.displayName = 'HeaderSkeleton'
 
 export const DashboardLayout = memo(function DashboardLayout({ 
-  children, 
-  isBlurred = false
+  children 
 }: Omit<DashboardLayoutProps, 'activeItem'>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const { isAnyModalOpen } = useModal()
   
   const handleSidebarToggle = () => {
     startTransition(() => {
@@ -57,36 +56,30 @@ export const DashboardLayout = memo(function DashboardLayout({
   }
 
   return (
-    <>
-      <div className="flex h-screen">
-        {/* Mobile overlay with modern backdrop */}
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-            onClick={handleSidebarClose}
-            style={{ containIntrinsicSize: '100vw 100vh' }}
-          />
-        )}
-        
-        {/* Sidebar with modern optimizations */}
+    <div className="flex h-screen relative">
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          onClick={handleSidebarClose}
+        />
+      )}
+      
+      {/* Content wrapper */}
+      <div className="flex flex-1 relative">
+        {/* Sidebar */}
         <aside 
-          className={`
-            fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-out lg:relative lg:translate-x-0
-            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            ${isBlurred ? 'blur-sm' : ''}
-            rounded-tr-3xl rounded-br-3xl overflow-hidden
-          `}
-          style={{ 
-            contentVisibility: 'auto', 
-            containIntrinsicSize: '256px 100vh'
-          }}
+          className={cn(
+            "fixed inset-y-0 left-0 w-64 transform transition-all duration-300 ease-out lg:relative lg:translate-x-0 z-30",
+            "rounded-tr-3xl rounded-br-3xl overflow-hidden",
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
         >
           <div className="relative h-full bg-white dark:bg-black rounded-tr-3xl rounded-br-3xl">
             <Suspense fallback={<SidebarSkeleton />}>
               <AppSidebar onClose={handleSidebarClose} />
             </Suspense>
             
-            {/* Mobile close button with modern interactions */}
             {isSidebarOpen && (
               <button
                 onClick={handleSidebarClose}
@@ -99,22 +92,25 @@ export const DashboardLayout = memo(function DashboardLayout({
           </div>
         </aside>
 
-        {/* Main content with modern layout optimizations */}
-        <div className={`flex-1 flex flex-col min-w-0 overflow-hidden ${isBlurred ? 'blur-sm' : ''}`}>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Suspense fallback={<HeaderSkeleton />}>
             <AppHeader onMenuClick={handleSidebarToggle} />
           </Suspense>
           
-          {/* Page content with content-visibility optimization */}
-          <main 
-            className="flex-1 overflow-auto"
-            style={{ contentVisibility: 'auto' }}
-          >
-              {children}
+          <main className="flex-1 overflow-auto relative">
+            {children}
           </main>
         </div>
       </div>
-    </>
+
+      {/* Modal overlay */}
+      {isAnyModalOpen && (
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          <div className="absolute inset-0 bg-black/5 backdrop-blur-sm" />
+        </div>
+      )}
+    </div>
   )
 })
 

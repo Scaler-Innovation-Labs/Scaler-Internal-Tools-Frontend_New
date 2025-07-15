@@ -5,7 +5,7 @@ export interface BusSchedule {
   from: string
   arrivalTime: string
   to: string
-  status: "scheduled" | "departed" | "waiting"
+  status: 'SCHEDULED' | 'DEPARTED' | 'WAITING' | 'scheduled' | 'departed' | 'waiting'
 }
 
 export interface TransportHeaderProps {
@@ -16,6 +16,7 @@ export interface TransportHeaderProps {
 
 export interface BusScheduleTableProps {
   schedules: BusSchedule[]
+  loading?: boolean
 }
 
 export interface ImportantNotesProps {

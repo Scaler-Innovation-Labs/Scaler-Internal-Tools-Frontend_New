@@ -1,20 +1,21 @@
 import type { Metadata } from "next"
+import AdminRoute from "@/components/admin-route"
 
 export const metadata: Metadata = {
-  title: "Transport Services | SST Campus Bus Schedules",
-  description: "Access SST campus bus schedules, departure times, and real-time transportation information. Stay updated with Micro Campus to Macro Campus shuttle services.",
-  keywords: ["SST transport", "campus bus", "shuttle schedule", "micro campus", "macro campus", "bus timing"],
+  title: "Transport Admin | SST Campus Bus Schedules",
+  description: "Admin interface for managing SST campus bus schedules and transportation services.",
+  keywords: ["SST transport admin", "campus bus management", "transportation admin"],
   openGraph: {
-    title: "Transport Services - SST Campus Bus Schedules",
-    description: "Access SST campus bus schedules and real-time transportation information",
+    title: "Transport Admin - SST Campus Bus Schedules",
+    description: "Admin interface for managing SST campus bus schedules",
     type: "website",
   },
 }
 
-export default function TransportLayout({
+export default function TransportAdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return <AdminRoute>{children}</AdminRoute>
 } 
