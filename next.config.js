@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8000/api/:path*', // Proxy to backend
+      },
+    ];
+  },
   // Modern Next.js 15 experimental features
   experimental: {
     // Latest performance optimizations
