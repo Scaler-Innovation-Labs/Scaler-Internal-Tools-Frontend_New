@@ -47,29 +47,29 @@ const ScheduleRow = memo(({ schedule }: { schedule: BusScheduleTableProps['sched
   
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+      <td className="w-[120px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
         {schedule.date}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+      <td className="w-[100px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
         {schedule.day}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap !text-center">
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-[#E3F2FD] text-blue-700 dark:text-blue-900">
+      <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
           {schedule.departureTime}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+      <td className="w-[140px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
         {schedule.from}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap !text-center">
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-[#E3F2FD] text-blue-700 dark:text-blue-900">
+      <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
           {schedule.arrivalTime}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+      <td className="w-[140px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
         {schedule.to}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap !text-center">
+      <td className="w-[120px] px-4 py-4 whitespace-nowrap !text-center">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] ${statusColors[status]}`}>
           {status.charAt(0) + status.slice(1).toLowerCase()}
         </span>
@@ -183,25 +183,25 @@ export const BusScheduleTable = memo(function BusScheduleTable({ schedules = [],
         <table className="min-w-full" role="table">
           <thead>
             <tr className="bg-[#F5F5F5] dark:bg-black rounded-xl">
-              <th className="first:rounded-l-xl px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="first:rounded-l-xl w-[120px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 Date
               </th>
-              <th className="px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="w-[100px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 Day
               </th>
-              <th className="px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 Departure Time
               </th>
-              <th className="px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 From
               </th>
-              <th className="px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 Arrival Time
               </th>
-              <th className="px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 To
               </th>
-              <th className="last:rounded-r-xl px-6 py-3 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase" scope="col">
+              <th className="last:rounded-r-xl w-[120px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
                 Status
               </th>
             </tr>

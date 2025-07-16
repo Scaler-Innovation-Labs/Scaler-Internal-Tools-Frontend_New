@@ -37,6 +37,7 @@ export interface BusScheduleUpdateDto {
   departureTime: string
   arrivalTime: string
   date: string
+  busStatus: string
 }
 
 // Base URL from config

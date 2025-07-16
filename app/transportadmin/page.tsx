@@ -8,11 +8,12 @@ import { BusScheduleTable } from "./components/bus-schedule-table";
 import { ScheduleBusPopup } from "./components/schedule-bus-popup";
 import { ImportantNotes } from "./components/important-notes";
 import { useTransport } from "@/hooks/use-transport";
-import type { BusScheduleCreateDto } from "@/lib/transport-api";
-import type { BusSchedule } from "../transport/types";
+import type { BusScheduleCreateDto, BusScheduleUpdateDto } from "@/lib/transport-api";
+import type { BusSchedule } from "./types";
 import { Button } from "@/components/ui/button";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { config } from "@/lib/config";
+import { EditSchedulePopup } from "./components/edit-schedule-popup";
 
 const importantNotes = [
   "Buses depart on schedule. Please ensure schedules are updated at least 24 hours in advance.",
@@ -23,20 +24,27 @@ const REFRESH_INTERVAL = config.ui.refreshIntervals.busSchedules; // 30 seconds
 
 export default function TransportAdminPage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<BusSchedule | null>(null);
   const [selectedDate] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const todayLong = format(selectedDate, 'd MMMM yyyy');
-  const { schedules, loading, error, fetchSchedulesByDate, createSchedule } = useTransport({ isAdmin: true });
+  const { schedules, loading, error, fetchSchedulesByDate, createSchedule, updateSchedule, deleteSchedule } = useTransport({ isAdmin: true });
 
   // Transform schedules to match the expected format
   const transformedSchedules: BusSchedule[] = schedules.map(s => ({
+    id: s.id,
     date: format(new Date(s.date), 'dd/MM/yyyy'),
     day: new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' }),
     departureTime: s.departureTime,
     from: s.source,
     arrivalTime: s.arrivalTime,
     to: s.destination,
-    status: s.busStatus?.toUpperCase() as BusSchedule['status'] || 'SCHEDULED'
+    status: s.busStatus?.toUpperCase() as BusSchedule['status'] || 'SCHEDULED',
+    source: s.source,
+    destination: s.destination,
+    dayOfWeek: s.dayOfWeek,
+    busStatus: s.busStatus || 'SCHEDULED'
   }));
 
   // Load initial data and set up automatic refresh
@@ -86,6 +94,56 @@ export default function TransportAdminPage() {
     }
   };
 
+  const handleEdit = (schedule: BusSchedule) => {
+    setSelectedSchedule(schedule);
+    setIsEditPopupOpen(true);
+  };
+
+  const handleDelete = async (schedule: BusSchedule) => {
+    if (confirm('Are you sure you want to delete this schedule?')) {
+      try {
+        await deleteSchedule(schedule.id);
+        // After a short delay, refresh the schedules to ensure consistency
+        setTimeout(async () => {
+          await fetchSchedulesByDate(new Date());
+        }, 500);
+      } catch (err) {
+        console.error('Failed to delete schedule:', err);
+      }
+    }
+  };
+
+  const handleEditSubmit = async (scheduleData: {
+    source: string;
+    destination: string;
+    departureTime: string;
+    arrivalTime: string;
+    date: Date;
+    status: string;
+  }) => {
+    if (!selectedSchedule) return;
+
+    try {
+      setIsRefreshing(true);
+      const updateDto: BusScheduleUpdateDto = {
+        source: scheduleData.source,
+        destination: scheduleData.destination,
+        departureTime: scheduleData.departureTime,
+        arrivalTime: scheduleData.arrivalTime,
+        date: format(scheduleData.date, 'yyyy-MM-dd'),
+        busStatus: scheduleData.status
+      };
+      
+      // Update the schedule and get updated list
+      await updateSchedule(selectedSchedule.id, updateDto);
+      setIsEditPopupOpen(false);
+    } catch (err) {
+      console.error('Failed to update schedule:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
@@ -94,8 +152,8 @@ export default function TransportAdminPage() {
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto">
           <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Schedule Management</h2>
-              <p className="text-sm sm:text-base text-slate-100 font-normal max-w-[280px] sm:max-w-none">Manage campus bus schedules and transportation services.</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Transport Services</h2>
+              <p className="text-sm sm:text-base text-slate-100 font-normal max-w-[280px] sm:max-w-none">Access campus bus schedules and track real-time bus locations.</p>
             </div>
             <div className="flex items-center gap-4">
               <Button
@@ -138,7 +196,12 @@ export default function TransportAdminPage() {
                 </div>
               ) : (
                 <div className="mb-8">
-                  <BusScheduleTable schedules={transformedSchedules} loading={loading || isRefreshing} />
+                  <BusScheduleTable 
+                    schedules={transformedSchedules} 
+                    loading={loading || isRefreshing}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
                 </div>
               )}
 
@@ -156,6 +219,16 @@ export default function TransportAdminPage() {
           onSubmit={handleScheduleSubmit}
           selectedDate={selectedDate}
         />
+
+        {/* Edit Schedule Popup */}
+        {selectedSchedule && (
+          <EditSchedulePopup
+            isOpen={isEditPopupOpen}
+            onClose={() => setIsEditPopupOpen(false)}
+            onSubmit={handleEditSubmit}
+            schedule={selectedSchedule}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

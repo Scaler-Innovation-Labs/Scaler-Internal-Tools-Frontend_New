@@ -48,7 +48,7 @@ export default function TransportPage() {
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto">
           <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Bus Schedule</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Transport Services</h2>
               <p className="text-sm sm:text-base text-slate-100 font-normal max-w-[280px] sm:max-w-none">Access campus bus schedules and track real-time bus locations.</p>
             </div>
           </div>

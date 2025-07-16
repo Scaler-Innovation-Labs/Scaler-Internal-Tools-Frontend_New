@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { useTransportApi } from '@/lib/transport-api'
-import type { BusScheduleResponseDto, BusScheduleSummaryDto, BusScheduleCreateDto } from '@/lib/transport-api'
+import type { BusScheduleResponseDto, BusScheduleSummaryDto, BusScheduleCreateDto, BusScheduleUpdateDto } from '@/lib/transport-api'
 import { format } from 'date-fns'
 
 interface UseTransportProps {
@@ -92,11 +92,96 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
     }
   }, [transportApi]);
 
+  const updateSchedule = useCallback(async (id: number, schedule: BusScheduleUpdateDto) => {
+    if (fetchInProgressRef.current) return null;
+    
+    try {
+      fetchInProgressRef.current = true;
+      setLoading(true);
+      setError(null);
+      
+      // Update the schedule
+      const result = await transportApi.updateSchedule(id, schedule);
+      
+      // Immediately fetch latest schedules
+      const formattedDate = format(new Date(schedule.date), 'yyyy-MM-dd');
+      const updatedSchedules = await transportApi.getAdminSchedulesByDate(formattedDate);
+      
+      // Process and update the schedules
+      const processedSchedules = Array.isArray(updatedSchedules) 
+        ? updatedSchedules.map(schedule => ({
+            ...schedule,
+            busStatus: schedule.busStatus?.toUpperCase() || 'SCHEDULED'
+          }))
+        : [];
+      
+      setSchedules(processedSchedules);
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      return null;
+    } finally {
+      setLoading(false);
+      fetchInProgressRef.current = false;
+    }
+  }, [transportApi]);
+
+  const deleteSchedule = useCallback(async (id: number) => {
+    try {
+      setError(null);
+      
+      // Delete the schedule
+      await transportApi.deleteSchedule(id);
+      
+      // Remove the deleted schedule from state
+      setSchedules(prev => prev.filter(schedule => schedule.id !== id));
+      return true;
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      return false;
+    }
+  }, [transportApi]);
+
+  // Add a new function for refreshing schedules
+  const refreshSchedules = useCallback(async (date: Date) => {
+    if (fetchInProgressRef.current) return;
+    
+    try {
+      fetchInProgressRef.current = true;
+      setLoading(true);
+      setError(null);
+      
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      const updatedSchedules = await transportApi.getAdminSchedulesByDate(formattedDate);
+      
+      // Process and update the schedules
+      const processedSchedules = Array.isArray(updatedSchedules) 
+        ? updatedSchedules.map(schedule => ({
+            ...schedule,
+            busStatus: schedule.busStatus?.toUpperCase() || 'SCHEDULED'
+          }))
+        : [];
+      
+      setSchedules(processedSchedules);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        fetchInProgressRef.current = false;
+      }, 100);
+    }
+  }, [transportApi]);
+
   return {
     schedules,
     loading,
     error,
     fetchSchedulesByDate,
-    createSchedule
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    refreshSchedules
   }
 } 

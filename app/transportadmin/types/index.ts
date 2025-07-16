@@ -1,11 +1,18 @@
+import type { BusScheduleResponseDto } from "@/lib/transport-api";
+
 export interface BusSchedule {
-  date: string;
-  day: string;
+  id: number;
+  source: string;
+  destination: string;
   departureTime: string;
-  from: string;
   arrivalTime: string;
+  dayOfWeek: string;
+  date: string;
+  busStatus: string;
+  day: string;
+  from: string;
   to: string;
-  status?: string;
+  status: 'SCHEDULED' | 'DEPARTED' | 'WAITING';
 }
 
 export interface TransportHeaderProps {
