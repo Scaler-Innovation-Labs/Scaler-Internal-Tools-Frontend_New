@@ -56,24 +56,41 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
   }, [isAdmin, transportApi])
 
   const createSchedule = useCallback(async (schedule: BusScheduleCreateDto) => {
-    if (fetchInProgressRef.current) return null
+    if (fetchInProgressRef.current) return null;
     
     try {
-      fetchInProgressRef.current = true
-      setError(null)
-      const result = await transportApi.createSchedule(schedule)
-      await fetchSchedulesByDate(new Date(schedule.date))
-      return result
+      fetchInProgressRef.current = true;
+      setLoading(true);
+      setError(null);
+      
+      // Create the schedule
+      const result = await transportApi.createSchedule(schedule);
+      
+      // Immediately fetch latest schedules
+      const formattedDate = format(new Date(schedule.date), 'yyyy-MM-dd');
+      const updatedSchedules = await transportApi.getAdminSchedulesByDate(formattedDate);
+      
+      // Process and update the schedules
+      const processedSchedules = Array.isArray(updatedSchedules) 
+        ? updatedSchedules.map(schedule => ({
+            ...schedule,
+            busStatus: schedule.busStatus?.toUpperCase() || 'SCHEDULED'
+          }))
+        : [];
+      
+      setSchedules(processedSchedules);
+      return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      throw err
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
     } finally {
+      setLoading(false);
       // Add a small delay before allowing the next fetch
       setTimeout(() => {
-        fetchInProgressRef.current = false
-      }, 100)
+        fetchInProgressRef.current = false;
+      }, 100);
     }
-  }, [transportApi, fetchSchedulesByDate])
+  }, [transportApi]);
 
   return {
     schedules,

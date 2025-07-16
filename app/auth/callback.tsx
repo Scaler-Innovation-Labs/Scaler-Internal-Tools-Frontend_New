@@ -20,7 +20,7 @@ export default function AuthCallback() {
           if (errorDescription?.includes('Invalid domain')) {
             setError('Only @sst.scaler.com and @scaler.com domains are allowed');
           } else {
-            setError(errorDescription || `Authentication error: ${errorParam}`);
+          setError(errorDescription || `Authentication error: ${errorParam}`);
           }
           setTimeout(() => router.replace('/login'), 3000);
           return;

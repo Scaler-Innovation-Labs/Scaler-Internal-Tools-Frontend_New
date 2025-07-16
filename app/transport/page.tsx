@@ -43,11 +43,7 @@ export default function TransportPage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
-        <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto mt-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-8 text-center">
-            SST Transport Services
-          </h1>
-        </div>
+       
 
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto">
           <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
@@ -55,42 +51,33 @@ export default function TransportPage() {
               <h2 className="text-2xl sm:text-3xl font-bold text-white">Bus Schedule</h2>
               <p className="text-sm sm:text-base text-slate-100 font-normal max-w-[280px] sm:max-w-none">Access campus bus schedules and track real-time bus locations.</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="bg-white/10 text-white hover:bg-white/20 border-white/20"
-            >
-              <ArrowPathIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              <span className="ml-2">Refresh</span>
-            </Button>
           </div>
         </div>
 
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto z-10 mb-12">
-          <div className="bg-white dark:bg-black rounded-2xl shadow-lg p-0 sm:p-0 border border-gray-100 dark:border-gray-700 flex flex-col">
-            <div className="px-10 pt-10 pb-2 min-w-full text-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{todayLong}</h2>
+          <div className="bg-white dark:bg-black rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="px-10 py-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bus Schedule</h2>
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <CalendarIcon className="h-5 w-5" />
+                  <span className="text-base font-medium">{todayLong}</span>
                 </div>
               </div>
 
               {error ? (
-                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900/10">
+                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 mb-6">
                   <p className="font-medium">Error: {error}</p>
                 </div>
               ) : (
-                <BusScheduleTable schedules={transformedSchedules} loading={loading} />
+                <div className="mb-8">
+                  <BusScheduleTable schedules={transformedSchedules} loading={loading} />
+                </div>
               )}
-            </div>
 
-            <div className="border-t border-gray-200 dark:border-gray-700 mx-10 my-2" />
-
-            <div className="px-10 pb-10 pt-2">
-              <ImportantNotes notes={IMPORTANT_NOTES} />
+              <div className="mt-2 pb-8">
+                <ImportantNotes notes={IMPORTANT_NOTES} />
+              </div>
             </div>
           </div>
         </div>

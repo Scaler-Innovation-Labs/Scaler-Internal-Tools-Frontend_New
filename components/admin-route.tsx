@@ -10,7 +10,20 @@ export default function AdminRoute({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
 
-  const adminPaths = ["/transportadmin"];
+  const adminPaths = [
+    "/transportadmin",
+    "/mess-admin",
+    "/ticket-admin",
+    "/documentadmin",
+    "/common-drive-admin",
+    "/fee-admin",
+    "/placement-admin",
+    "/room-booking-admin",
+    "/gallery-admin",
+    "/lost-found-admin",
+    "/borrowing-admin",
+    "/events-admin"
+  ];
 
   useEffect(() => {
     if (!isLoading) {
