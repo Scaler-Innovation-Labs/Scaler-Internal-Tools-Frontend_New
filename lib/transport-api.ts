@@ -75,6 +75,11 @@ export function useTransportApi() {
       }
     }
 
+    // For DELETE operations that return no content
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return (null as unknown) as T;
+    }
+
     try {
       // Check again if request was aborted before parsing response
       if (signal?.aborted) {
@@ -87,6 +92,10 @@ export function useTransportApi() {
         throw new Error('Request was aborted')
       }
       if (e instanceof Error && e.name === 'SyntaxError') {
+        // For empty responses that should be handled as successful
+        if (response.ok && response.status === 200) {
+          return (null as unknown) as T;
+        }
         throw new Error('Invalid response format from server')
       }
       throw new Error('Failed to parse server response')

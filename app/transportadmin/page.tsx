@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
@@ -11,7 +11,6 @@ import { useTransport } from "@/hooks/use-transport";
 import type { BusScheduleCreateDto, BusScheduleUpdateDto } from "@/lib/transport-api";
 import type { BusSchedule } from "./types";
 import { Button } from "@/components/ui/button";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { config } from "@/lib/config";
 import { EditSchedulePopup } from "./components/edit-schedule-popup";
 
@@ -27,7 +26,6 @@ export default function TransportAdminPage() {
   const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<BusSchedule | null>(null);
   const [selectedDate] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const todayLong = format(selectedDate, 'd MMMM yyyy');
   const { schedules, loading, error, fetchSchedulesByDate, createSchedule, updateSchedule, deleteSchedule } = useTransport({ isAdmin: true });
 
@@ -61,12 +59,6 @@ export default function TransportAdminPage() {
     return () => clearInterval(intervalId);
   }, [fetchSchedulesByDate]);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await fetchSchedulesByDate(new Date());
-    setIsRefreshing(false);
-  }, [fetchSchedulesByDate]);
-
   const handleScheduleSubmit = async (scheduleData: {
     source: string;
     destination: string;
@@ -75,7 +67,6 @@ export default function TransportAdminPage() {
     date: Date;
   }) => {
     try {
-      setIsRefreshing(true);
       const createDto: BusScheduleCreateDto = {
         source: scheduleData.source,
         destination: scheduleData.destination,
@@ -90,7 +81,7 @@ export default function TransportAdminPage() {
     } catch (err) {
       console.error('Failed to create schedule:', err);
     } finally {
-      setIsRefreshing(false);
+      // setIsRefreshing(false); // This line was removed
     }
   };
 
@@ -124,7 +115,6 @@ export default function TransportAdminPage() {
     if (!selectedSchedule) return;
 
     try {
-      setIsRefreshing(true);
       const updateDto: BusScheduleUpdateDto = {
         source: scheduleData.source,
         destination: scheduleData.destination,
@@ -140,7 +130,7 @@ export default function TransportAdminPage() {
     } catch (err) {
       console.error('Failed to update schedule:', err);
     } finally {
-      setIsRefreshing(false);
+      // setIsRefreshing(false); // This line was removed
     }
   };
 
@@ -157,20 +147,10 @@ export default function TransportAdminPage() {
             </div>
             <div className="flex items-center gap-4">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={loading || isRefreshing}
-                className="bg-white/10 text-white hover:bg-white/20 border-white/20"
-              >
-                <ArrowPathIcon className={`h-4 w-4 ${loading || isRefreshing ? "animate-spin" : ""}`} />
-                <span className="ml-2">Refresh</span>
-              </Button>
-              <Button
                 variant="default"
                 size="sm"
                 onClick={() => setIsPopupOpen(true)}
-                disabled={loading || isRefreshing}
+                disabled={loading}
                 className="bg-white text-blue-600 hover:bg-white/90"
               >
                 Create Schedule
@@ -198,7 +178,7 @@ export default function TransportAdminPage() {
                 <div className="mb-8">
                   <BusScheduleTable 
                     schedules={transformedSchedules} 
-                    loading={loading || isRefreshing}
+                    loading={loading}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                   />
