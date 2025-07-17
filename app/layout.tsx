@@ -3,7 +3,12 @@ import { Open_Sans } from "next/font/google"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CacheCleanup } from "@/components/cache-cleanup"
+
+import AdminRoute from "@/components/admin-route"
+import ClientLayout from "./client-layout"
+
 import "./globals.css"
+import { ModalProvider } from "@/contexts/modal-context"
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -85,10 +90,15 @@ export default function RootLayout({
       </head>
       <body className={`${openSans.className} antialiased min-h-screen bg-light-blue dark:bg-[#161616]`}>
         <ErrorBoundary>
-          <ThemeProvider attribute="class" defaultTheme="light" storageKey={null} enableSystem={false}>
-            {children}
+          <ThemeProvider>
+            <ModalProvider>
+              <ClientLayout>
+                {children}
+              </ClientLayout>
+            </ModalProvider>
           </ThemeProvider>
         </ErrorBoundary>
+        <CacheCleanup />
       </body>
     </html>
   )

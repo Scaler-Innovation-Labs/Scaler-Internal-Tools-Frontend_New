@@ -2,7 +2,9 @@
 
 import { useEffect } from 'react'
 
-export function CacheCleanup() {
+
+export function CacheCleanup({ children }: { children: React.ReactNode }) {
+
   useEffect(() => {
     // Clear localStorage
     localStorage.clear()
@@ -19,10 +21,8 @@ export function CacheCleanup() {
       })
     }
     
-    // Remove theme-specific items
-    localStorage.removeItem('theme')
-    localStorage.removeItem('sst-transport-theme')
-    
+
+
     // Force a hard reload if needed
     if (window.performance && window.performance.getEntriesByType) {
       const nav = window.performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
@@ -32,5 +32,7 @@ export function CacheCleanup() {
     }
   }, [])
 
-  return null
+
+  return <>{children}</>
+
 } 

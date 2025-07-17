@@ -1,70 +1,112 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "../../hooks/use-auth";
+import { config } from "../../lib/config";
 
 export default function AuthCallback() {
-  const { setAccessToken } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // Get the authorization code from URL params
-        const code = searchParams.get('code');
-        const error = searchParams.get('error');
-        
-        if (error) {
-          console.error('OAuth error:', error);
-          router.replace('/login?error=oauth_error');
-          return;
-        }
-        
-        if (!code) {
-          console.error('No authorization code received');
-          router.replace('/login?error=no_code');
+    const initializeAuth = async () => {
+      try { 
+        // Check for OAuth2 error parameters
+        const errorParam = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
+        if (errorParam) {
+          console.error('OAuth error:', errorParam, errorDescription);
+          // Handle domain-specific errors
+          if (errorDescription?.includes('Invalid domain')) {
+            setError('Only @sst.scaler.com and @scaler.com domains are allowed');
+          } else {
+          setError(errorDescription || `Authentication error: ${errorParam}`);
+          }
+          setTimeout(() => router.replace('/login'), 3000);
           return;
         }
 
-        // After OAuth, the backend should have set the refresh token as an HTTP-only cookie
-        // We need to get a new access token using that refresh token
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-        
-        // Give the backend a moment to set the cookie
-        setTimeout(async () => {
-          const res = await fetch(`${backendUrl}/auth/refresh`, {
-            method: "POST",
-            credentials: "include", // This will send the HTTP-only cookie
-            headers: { 
-              'Content-Type': 'application/json'
-            },
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            setAccessToken(data.accessToken);
-            router.replace("/dashboard");
-          } else {
-            console.error('Failed to refresh token:', res.status);
-            router.replace("/login?error=refresh_failed");
+        // Wait a short moment to ensure cookies are set
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Verify authentication with backend
+        const response = await fetch(`${config.api.backendUrl}/auth/verify`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
           }
-        }, 500); // 500ms delay to ensure cookie is set
-        
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Try refreshing token
+            const refreshResponse = await fetch(`${config.api.backendUrl}/auth/refresh`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Accept': 'application/json',
+              }
+            });
+
+            if (!refreshResponse.ok) {
+              throw new Error('Token refresh failed');
+            }
+
+            // Retry verification after refresh
+            const retryResponse = await fetch(`${config.api.backendUrl}/auth/verify`, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Accept': 'application/json',
+              }
+            });
+
+            if (!retryResponse.ok) {
+              throw new Error('Authentication failed after token refresh');
+            }
+
+            const retryData = await retryResponse.json();
+            if (retryData.authenticated) {
+              router.replace('/dashboard');
+              return;
+            }
+          }
+          throw new Error('Authentication failed');
+        }
+
+        const data = await response.json();
+        if (data.authenticated) {
+          router.replace('/dashboard');
+        } else {
+          throw new Error('Authentication failed');
+        }
       } catch (error) {
-        console.error('Callback error:', error);
-        router.replace("/login?error=callback_error");
+        console.error('Auth callback error:', error);
+        setError('Authentication failed. Please try again.');
+        setTimeout(() => router.replace('/login'), 3000);
       }
     };
-    
-    handleCallback();
-  }, [setAccessToken, router, searchParams]);
+
+    initializeAuth();
+  }, [router, searchParams]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-red-50 p-4 rounded-md">
+          <p className="text-red-700">{error}</p>
+          <p className="text-sm text-red-500 mt-2">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-blue-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-lg text-gray-600 dark:text-gray-300">Logging you in...</p>
+        <h2 className="text-xl font-semibold mb-2">Completing authentication...</h2>
+        <p className="text-gray-500">Please wait while we set up your session.</p>
       </div>
     </div>
   );

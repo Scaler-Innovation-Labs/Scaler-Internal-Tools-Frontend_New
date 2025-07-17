@@ -6,6 +6,12 @@ export const config = {
     version: "1.0.0",
   },
 
+  // API Configuration
+  api: {
+    backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000',
+    frontendUrl: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
+  },
+
   // UI Configuration
   ui: {
     refreshIntervals: {
