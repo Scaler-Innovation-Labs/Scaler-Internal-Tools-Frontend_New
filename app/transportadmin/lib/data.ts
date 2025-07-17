@@ -2,6 +2,7 @@ import type { BusSchedule } from "../types"
 
 export const busScheduleData: BusSchedule[] = [
   {
+    id: "1",
     date: "June 24, 2024",
     day: "Monday",
     departureTime: "10:00 AM",
@@ -11,6 +12,7 @@ export const busScheduleData: BusSchedule[] = [
     status: "scheduled"
   },
   {
+    id: "2",
     date: "June 24, 2024",
     day: "Monday",
     departureTime: "02:00 PM",
@@ -20,6 +22,7 @@ export const busScheduleData: BusSchedule[] = [
     status: "departed"
   },
   {
+    id: "3",
     date: "June 24, 2024",
     day: "Monday",
     departureTime: "04:00 PM",

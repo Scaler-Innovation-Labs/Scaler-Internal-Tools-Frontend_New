@@ -93,7 +93,7 @@ export default function TransportAdminPage() {
   const handleDelete = async (schedule: BusSchedule) => {
     if (confirm('Are you sure you want to delete this schedule?')) {
       try {
-        await deleteSchedule(schedule.id);
+        await deleteSchedule(Number(schedule.id));
         // After a short delay, refresh the schedules to ensure consistency
         setTimeout(async () => {
           await fetchSchedulesByDate(new Date());
@@ -125,7 +125,7 @@ export default function TransportAdminPage() {
       };
       
       // Update the schedule and get updated list
-      await updateSchedule(selectedSchedule.id, updateDto);
+      await updateSchedule(Number(selectedSchedule.id), updateDto);
       setIsEditPopupOpen(false);
     } catch (err) {
       console.error('Failed to update schedule:', err);

@@ -1,4 +1,5 @@
 export interface BusSchedule {
+  id: string | number
   date: string
   day: string
   departureTime: string
@@ -6,6 +7,10 @@ export interface BusSchedule {
   arrivalTime: string
   to: string
   status: 'scheduled' | 'departed' | 'waiting'
+}
+
+export interface ImportantNotesProps {
+  notes?: string[]
 }
 
 export interface BusScheduleTableProps {
