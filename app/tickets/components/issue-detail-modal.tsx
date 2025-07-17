@@ -121,10 +121,10 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = tr
       // Upload new files if any (simulate, or use FormData if backend supports)
       let uploadedFiles: string[] = [];
       if (newFiles.length > 0) {
-        // Example: upload to /api/issues/{id}/attachments (adjust as needed)
+        // Example: upload to /tickets/{id}/images (adjusted as needed)
         const formData = new FormData();
         newFiles.forEach(f => formData.append('files', f));
-        const uploadRes = await fetchWithAuth(`/api/issues/${issue.id}/attachments`, {
+        const uploadRes = await fetchWithAuth(`/tickets/${issue.id}/images`, {
           method: 'POST',
           body: formData,
           headers: {}, // Let browser set Content-Type for FormData

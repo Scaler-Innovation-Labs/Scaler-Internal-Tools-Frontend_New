@@ -1,5 +1,4 @@
 import type { TicketTableProps } from "../types";
-import type { Ticket } from "../types";
 import { useState } from "react";
 import { thumbup as Thumbup } from "@/components/ui/icons";
 import { ChevronDown, ChevronUp, Calendar, Paperclip, User, ChevronLeft, ChevronRight, X, Trash2, Edit2 } from "lucide-react";
@@ -322,4 +321,4 @@ export function TicketTable({ tickets, onLike, onDelete }: TicketTableProps & { 
       </div>
     </div>
   );
-}
+} 
