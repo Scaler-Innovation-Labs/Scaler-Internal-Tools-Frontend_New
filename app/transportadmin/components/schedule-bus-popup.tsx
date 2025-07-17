@@ -209,15 +209,15 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
       id="schedule-bus"
       isOpen={isOpen}
       onClose={onClose}
-      className="w-[450px] max-w-[95vw] p-0 rounded-xl overflow-hidden shadow-2xl bg-white"
+      className="w-[400px] max-w-[95vw] p-0 rounded-xl overflow-hidden shadow-2xl bg-white"
     >
       {/* Header */}
-      <div className="bg-blue-600 px-6 py-3">
-        <h2 className="text-white font-semibold text-xl">Schedule Bus</h2>
+      <div className="bg-blue-600 px-4 py-2">
+        <h2 className="text-white font-medium text-base">Schedule Bus</h2>
       </div>
 
       {/* Content */}
-      <div className="px-8 py-6">
+      <div className="px-6 py-5">
         <form className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
@@ -227,10 +227,10 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 
           {/* Starting Stop */}
           <div className="flex items-center">
-            <label className="w-[140px] text-gray-700 font-medium">Starting Stop</label>
+            <label className="w-[120px] text-gray-700 font-medium">Starting Stop</label>
             <div className="flex-1 flex justify-end">
               <select 
-                className="border border-gray-300 rounded-md px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="border border-gray-300 rounded-md px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={formData.source}
                 onChange={(e) => handleInputChange("source", e.target.value)}
               >
@@ -242,10 +242,10 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 
           {/* Destination */}
           <div className="flex items-center">
-            <label className="w-[140px] text-gray-700 font-medium">Destination</label>
+            <label className="w-[120px] text-gray-700 font-medium">Destination</label>
             <div className="flex-1 flex justify-end">
               <select 
-                className="border border-gray-300 rounded-md px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100 text-gray-500 cursor-not-allowed"
+                className="border border-gray-300 rounded-md px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100 text-gray-500 cursor-not-allowed"
                 value={formData.destination}
                 disabled
               >
@@ -256,9 +256,9 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 
           {/* Departure Time */}
           <div className="flex items-center">
-            <label className="w-[140px] text-gray-700 font-medium">Departure Time</label>
+            <label className="w-[120px] text-gray-700 font-medium">Departure Time</label>
             <div className="flex-1 flex justify-end">
-              <div className="w-48 flex space-x-2">
+              <div className="w-44 flex space-x-2">
                 <select 
                   className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.departureHour}
@@ -295,9 +295,9 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 
           {/* Arrival Time */}
           <div className="flex items-center">
-            <label className="w-[140px] text-gray-700 font-medium">Arrival Time</label>
+            <label className="w-[120px] text-gray-700 font-medium">Arrival Time</label>
             <div className="flex-1 flex justify-end">
-              <div className="w-48 flex space-x-2">
+              <div className="w-44 flex space-x-2">
                 <select 
                   className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 bg-gray-100 text-gray-500 cursor-not-allowed"
                   value={formData.arrivalHour}
@@ -325,15 +325,15 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 
           {/* Date of Departure */}
           <div className="flex items-center">
-            <label className="w-[140px] text-gray-700 font-medium whitespace-nowrap">Date of Departure</label>
+            <label className="w-[120px] text-gray-700 font-medium whitespace-nowrap">Date of Departure</label>
             <div className="flex-1 flex justify-end">
-              <div className="relative w-48">
+              <div className="relative w-44">
                 <input 
                   type="text" 
                   className="border border-gray-300 rounded-md px-3 py-1.5 w-full pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   value={formattedDate}
                   readOnly
-                  onClick={() => dateInputRef.current?.showPicker()}
+                  onClick={handleCalendarClick}
                 />
                 <input 
                   ref={dateInputRef}
@@ -358,14 +358,14 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300 transition-colors"
+              className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded-md hover:bg-gray-300 transition-colors"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSubmit}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2 rounded-md hover:from-blue-600 hover:to-purple-700 transition-colors"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-1.5 rounded-md hover:from-blue-600 hover:to-purple-700 transition-colors"
             >
               Schedule
             </button>
