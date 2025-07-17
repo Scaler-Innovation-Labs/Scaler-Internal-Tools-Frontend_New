@@ -5,9 +5,9 @@ import type { BusSchedule, BusScheduleTableProps } from "../types"
 type StatusType = 'SCHEDULED' | 'DEPARTED' | 'WAITING'
 
 const statusColors = {
-  SCHEDULED: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  DEPARTED: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  WAITING: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  SCHEDULED: "bg-[#19E7422B] text-[#319F43] dark:bg-green-900/30 dark:text-green-300",
+  DEPARTED: "bg-[#E5585836] text-[#D40000] dark:bg-red-900/30 dark:text-red-300",
+  WAITING: "bg-[#F891002E] text-[#FF803E] dark:bg-orange-900/30 dark:text-orange-300",
 } as const
 
 // Helper function to format status
@@ -70,7 +70,7 @@ const ScheduleRow = memo(({ schedule }: { schedule: BusScheduleTableProps['sched
         {schedule.to}
       </td>
       <td className="w-[120px] px-4 py-4 whitespace-nowrap !text-center">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] ${statusColors[status]}`}>
+        <span className={`inline-flex items-center px-4 py-1.5 rounded-full !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] ${statusColors[status]}`}>
           {status.charAt(0) + status.slice(1).toLowerCase()}
         </span>
       </td>
@@ -145,7 +145,7 @@ const MobileScheduleCard = memo(({ schedule }: { schedule: BusScheduleTableProps
 
       {/* Status */}
       <div className="flex justify-end mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${statusColors[status]}`}>
+        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium ${statusColors[status]}`}>
           {status.charAt(0) + status.slice(1).toLowerCase()}
         </span>
       </div>
