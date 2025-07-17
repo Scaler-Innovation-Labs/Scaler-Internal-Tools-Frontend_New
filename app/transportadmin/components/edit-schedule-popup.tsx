@@ -34,6 +34,12 @@ const statusOptions = [
   { value: 'WAITING', label: 'Waiting', color: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800' },
 ];
 
+const campusOptions = [
+  "Macro Campus",
+  "Micro Campus 1",
+  "Micro Campus 2"
+];
+
 export function EditSchedulePopup({ isOpen, onClose, onSubmit, schedule }: EditSchedulePopupProps) {
   const [error, setError] = useState<string | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -146,15 +152,23 @@ export function EditSchedulePopup({ isOpen, onClose, onSubmit, schedule }: EditS
     }
   };
 
+  const getAvailableDestinations = (source: string) => {
+    if (source === "Macro Campus") {
+      return campusOptions.filter(campus => campus !== "Macro Campus");
+    } else {
+      return ["Macro Campus"];
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setError(null);
     
     if (field === 'source') {
-      // Automatically set destination based on source
+      // Reset destination when source changes
       setFormData(prev => ({
         ...prev,
         [field]: value,
-        destination: value === "Macro Campus" ? "Micro Campus" : "Macro Campus"
+        destination: '' // Reset destination to empty
       }));
     } else if (field === 'departureHour' || field === 'departureMinute' || field === 'departureAmPm') {
       // Update form data with new departure time
@@ -220,8 +234,10 @@ export function EditSchedulePopup({ isOpen, onClose, onSubmit, schedule }: EditS
                 value={formData.source}
                 onChange={(e) => handleInputChange("source", e.target.value)}
               >
-                <option>Macro Campus</option>
-                <option>Micro Campus</option>
+                <option value="">Select Starting Stop</option>
+                {campusOptions.map((campus) => (
+                  <option key={campus} value={campus}>{campus}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -231,11 +247,20 @@ export function EditSchedulePopup({ isOpen, onClose, onSubmit, schedule }: EditS
             <label className="w-[120px] text-gray-700 font-medium">Destination</label>
             <div className="flex-1 flex justify-end">
               <select 
-                className="border border-gray-300 rounded-md px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100 text-gray-500 cursor-not-allowed"
+                className={cn(
+                  "border rounded-md px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:border-transparent",
+                  !formData.source && "bg-gray-100 text-gray-500 cursor-not-allowed",
+                  formData.source && !formData.destination && "border-red-500 focus:ring-red-500",
+                  formData.source && formData.destination && "border-gray-300 focus:ring-blue-500"
+                )}
                 value={formData.destination}
-                disabled
+                onChange={(e) => handleInputChange("destination", e.target.value)}
+                disabled={!formData.source}
               >
-                <option>{formData.destination}</option>
+                <option value="">Select Destination</option>
+                {formData.source && getAvailableDestinations(formData.source).map((campus) => (
+                  <option key={campus} value={campus}>{campus}</option>
+                ))}
               </select>
             </div>
           </div>
