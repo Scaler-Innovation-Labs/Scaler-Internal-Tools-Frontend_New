@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { format, addDays, subDays } from "date-fns";
 import { BusScheduleTable } from "./components/bus-schedule-table";
 import { ScheduleBusPopup } from "./components/schedule-bus-popup";
 import { ImportantNotes } from "./components/important-notes";
@@ -19,14 +18,35 @@ const importantNotes = [
   "Any changes to bus schedules should be communicated to all students via announcements."
 ];
 
-const REFRESH_INTERVAL = config.ui.refreshIntervals.busSchedules; // 30 seconds
+const REFRESH_INTERVAL = config.ui.refreshIntervals.busSchedules;
+
+// Custom Calendar Icon component
+const CustomCalendarIcon = () => (
+  <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 1.16675C12.3665 1.16693 12.666 1.46718 12.666 1.83374V2.49976H13.333C14.0663 2.49976 14.666 3.10041 14.666 3.83374V14.4998C14.666 15.2331 14.0663 15.8337 13.333 15.8337H2.66602C1.93283 15.8336 1.33301 15.233 1.33301 14.4998V3.83374C1.33301 3.10052 1.93283 2.49993 2.66602 2.49976H3.33301V1.83374C3.33301 1.46707 3.63333 1.16675 4 1.16675C4.36652 1.16693 4.66602 1.46718 4.66602 1.83374V2.49976H11.333V1.83374C11.333 1.46707 11.6333 1.16675 12 1.16675ZM2.66602 5.83374V13.8337C2.66619 14.2003 2.96645 14.4998 3.33301 14.4998H12.666C13.0326 14.4998 13.3328 14.2003 13.333 13.8337V5.83374H2.66602Z" fill="#494E50"/>
+  </svg>
+)
+
+// Previous Arrow Icon
+const PrevArrowIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12.5 15L7.5 10L12.5 5" stroke="#494E50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+// Next Arrow Icon
+const NextArrowIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7.5 15L12.5 10L7.5 5" stroke="#494E50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
 
 export default function TransportAdminPage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<BusSchedule | null>(null);
-  const [selectedDate] = useState(new Date());
-  const todayLong = format(selectedDate, 'd MMMM yyyy');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const { schedules, loading, error, fetchSchedulesByDate, createSchedule, updateSchedule, deleteSchedule } = useTransport({ isAdmin: true });
 
   // Transform schedules to match the expected format
@@ -48,16 +68,35 @@ export default function TransportAdminPage() {
   // Load initial data and set up automatic refresh
   useEffect(() => {
     // Initial fetch
-    fetchSchedulesByDate(new Date());
+    fetchSchedulesByDate(selectedDate);
 
     // Set up periodic refresh
     const intervalId = setInterval(() => {
-      fetchSchedulesByDate(new Date());
+      fetchSchedulesByDate(selectedDate);
     }, REFRESH_INTERVAL);
 
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [fetchSchedulesByDate]);
+  }, [fetchSchedulesByDate, selectedDate]);
+
+  const handleDateChange = async (date: Date) => {
+    setSelectedDate(date);
+    try {
+      await fetchSchedulesByDate(date);
+    } catch (error) {
+      console.error('Failed to fetch schedules:', error);
+    }
+  };
+
+  const handlePrevDate = async () => {
+    const newDate = subDays(selectedDate, 1);
+    await handleDateChange(newDate);
+  };
+
+  const handleNextDate = async () => {
+    const newDate = addDays(selectedDate, 1);
+    await handleDateChange(newDate);
+  };
 
   const handleScheduleSubmit = async (scheduleData: {
     source: string;
@@ -75,13 +114,13 @@ export default function TransportAdminPage() {
         date: format(scheduleData.date, 'yyyy-MM-dd')
       };
       
-      // Create the schedule and get updated list
+      // Create the schedule
       await createSchedule(createDto);
       setIsPopupOpen(false);
+      // Immediately fetch updated schedules
+      await fetchSchedulesByDate(selectedDate);
     } catch (err) {
       console.error('Failed to create schedule:', err);
-    } finally {
-      // setIsRefreshing(false); // This line was removed
     }
   };
 
@@ -94,10 +133,8 @@ export default function TransportAdminPage() {
     if (confirm('Are you sure you want to delete this schedule?')) {
       try {
         await deleteSchedule(schedule.id);
-        // After a short delay, refresh the schedules to ensure consistency
-        setTimeout(async () => {
-          await fetchSchedulesByDate(new Date());
-        }, 500);
+        // Immediately fetch updated schedules
+        await fetchSchedulesByDate(selectedDate);
       } catch (err) {
         console.error('Failed to delete schedule:', err);
       }
@@ -124,21 +161,25 @@ export default function TransportAdminPage() {
         busStatus: scheduleData.status
       };
       
-      // Update the schedule and get updated list
+      // Update the schedule
       await updateSchedule(selectedSchedule.id, updateDto);
       setIsEditPopupOpen(false);
+      // Immediately fetch updated schedules
+      await fetchSchedulesByDate(selectedDate);
     } catch (err) {
       console.error('Failed to update schedule:', err);
-    } finally {
-      // setIsRefreshing(false); // This line was removed
+    }
+  };
+
+  const handleCalendarClick = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker();
     }
   };
 
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
-      
-
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto">
           <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
             <div className="space-y-2">
@@ -164,9 +205,46 @@ export default function TransportAdminPage() {
             <div className="px-10 py-8">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bus Schedule</h2>
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <CalendarIcon className="h-5 w-5" />
-                  <span className="text-base font-medium">{todayLong}</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePrevDate}
+                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      aria-label="Previous day"
+                    >
+                      <PrevArrowIcon />
+                    </button>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        className="border border-gray-300 rounded-md px-3 py-1.5 w-48 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
+                        value={format(selectedDate, "MM/dd/yyyy")}
+                        readOnly
+                        onClick={handleCalendarClick}
+                      />
+                      <input 
+                        ref={dateInputRef}
+                        type="date" 
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        value={format(selectedDate, 'yyyy-MM-dd')}
+                        onChange={(e) => handleDateChange(new Date(e.target.value))}
+                        min={format(new Date(), "yyyy-MM-dd")}
+                      />
+                      <div 
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                        onClick={handleCalendarClick}
+                      >
+                        <CustomCalendarIcon />
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleNextDate}
+                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      aria-label="Next day"
+                    >
+                      <NextArrowIcon />
+                    </button>
+                  </div>
                 </div>
               </div>
 

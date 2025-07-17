@@ -2,11 +2,9 @@
 
 import { useEffect, useCallback } from 'react';
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { CalendarIcon } from "@/components/ui/icons";
 import { useTransport } from "@/hooks/use-transport";
-import { Button } from "@/components/ui/button";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { BusScheduleTable } from "./components/bus-schedule-table";
 import { ImportantNotes } from "./components/important-notes";
 import type { BusSchedule } from "./types";
@@ -15,6 +13,16 @@ const IMPORTANT_NOTES = [
   "Buses depart on schedule. Please arrive at the bus stop 5 minutes before departure time.",
   "Bus schedules may change during examination periods and holidays. Check announcements for updates."
 ];
+
+// Helper function to convert 24h to 12h format
+const formatTo12Hour = (time: string) => {
+  if (!time) return ''
+  const [hours, minutes] = time.split(':')
+  const hour = parseInt(hours)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${minutes} ${ampm}`
+}
 
 export default function TransportPage() {
   const todayLong = format(new Date(), 'd MMMM yyyy');
@@ -29,9 +37,9 @@ export default function TransportPage() {
   const transformedSchedules: BusSchedule[] = schedules.map(s => ({
     date: format(new Date(s.date), 'dd/MM/yyyy'),
     day: new Date(s.date).toLocaleDateString('en-US', { weekday: 'long' }),
-    departureTime: s.departureTime,
+    departureTime: formatTo12Hour(s.departureTime),
     from: s.source,
-    arrivalTime: s.arrivalTime,
+    arrivalTime: formatTo12Hour(s.arrivalTime),
     to: s.destination,
     status: s.busStatus?.toUpperCase() as BusSchedule['status'] || 'SCHEDULED'
   }));
@@ -43,8 +51,6 @@ export default function TransportPage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
-       
-
         <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto">
           <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
             <div className="space-y-2">

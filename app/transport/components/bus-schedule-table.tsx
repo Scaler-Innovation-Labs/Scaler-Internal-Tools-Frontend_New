@@ -54,7 +54,7 @@ const ScheduleRow = memo(({ schedule }: { schedule: BusScheduleTableProps['sched
         {schedule.day}
       </td>
       <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+        <span className="inline-flex items-center px-4 py-1.5 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
           {schedule.departureTime}
         </span>
       </td>
@@ -62,7 +62,7 @@ const ScheduleRow = memo(({ schedule }: { schedule: BusScheduleTableProps['sched
         {schedule.from}
       </td>
       <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+        <span className="inline-flex items-center px-4 py-1.5 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
           {schedule.arrivalTime}
         </span>
       </td>
@@ -108,7 +108,7 @@ const MobileScheduleCard = memo(({ schedule }: { schedule: BusScheduleTableProps
             <ClockIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Departure</span>
           </div>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+          <span className="inline-flex items-center px-4 py-1.5 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
             {schedule.departureTime}
           </span>
         </div>
@@ -128,7 +128,7 @@ const MobileScheduleCard = memo(({ schedule }: { schedule: BusScheduleTableProps
             <ClockIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Arrival</span>
           </div>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+          <span className="inline-flex items-center px-4 py-1.5 rounded-lg text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
             {schedule.arrivalTime}
           </span>
         </div>

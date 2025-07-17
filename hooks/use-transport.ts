@@ -14,22 +14,30 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
   const transportApi = useTransportApi()
   const fetchInProgressRef = useRef(false)
   const lastFetchTimeRef = useRef<number>(0)
-  const MIN_FETCH_INTERVAL = 2000 // Minimum 2 seconds between fetches
+  const lastFetchedDateRef = useRef<string>('')
+  const MIN_FETCH_INTERVAL = 1000 // Reduce to 1 second
 
   const fetchSchedulesByDate = useCallback(async (date: Date) => {
     const now = Date.now()
-    // Prevent concurrent fetches and rapid refetches
-    if (fetchInProgressRef.current || (now - lastFetchTimeRef.current) < MIN_FETCH_INTERVAL) {
+    const formattedDate = format(date, 'yyyy-MM-dd')
+    
+    // Always fetch if the date is different from the last fetched date
+    const shouldFetch = 
+      !fetchInProgressRef.current && 
+      (formattedDate !== lastFetchedDateRef.current || 
+       (now - lastFetchTimeRef.current) >= MIN_FETCH_INTERVAL)
+    
+    if (!shouldFetch) {
       return
     }
     
     try {
       fetchInProgressRef.current = true
       lastFetchTimeRef.current = now
+      lastFetchedDateRef.current = formattedDate
       setLoading(true)
       setError(null)
       
-      const formattedDate = format(date, 'yyyy-MM-dd')
       const result = isAdmin 
         ? await transportApi.getAdminSchedulesByDate(formattedDate)
         : await transportApi.getUserSchedulesByDate(formattedDate)
@@ -48,10 +56,10 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
       setSchedules([])
     } finally {
       setLoading(false)
-      // Add a small delay before allowing the next fetch
+      // Reduce the delay before allowing the next fetch
       setTimeout(() => {
         fetchInProgressRef.current = false
-      }, 100)
+      }, 50)
     }
   }, [isAdmin, transportApi])
 

@@ -1,8 +1,15 @@
 "use client"
 
-import { memo, useEffect, useState } from "react"
-import { format, parse } from "date-fns"
+import { memo, useEffect, useState, useRef } from "react"
+import { format, parse, subMinutes, set } from "date-fns"
 import { Modal } from "@/components/ui/modal"
+
+// Custom Calendar Icon component
+const CalendarIcon = () => (
+  <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 1.16675C12.3665 1.16693 12.666 1.46718 12.666 1.83374V2.49976H13.333C14.0663 2.49976 14.666 3.10041 14.666 3.83374V14.4998C14.666 15.2331 14.0663 15.8337 13.333 15.8337H2.66602C1.93283 15.8336 1.33301 15.233 1.33301 14.4998V3.83374C1.33301 3.10052 1.93283 2.49993 2.66602 2.49976H3.33301V1.83374C3.33301 1.46707 3.63333 1.16675 4 1.16675C4.36652 1.16693 4.66602 1.46718 4.66602 1.83374V2.49976H11.333V1.83374C11.333 1.46707 11.6333 1.16675 12 1.16675ZM2.66602 5.83374V13.8337C2.66619 14.2003 2.96645 14.4998 3.33301 14.4998H12.666C13.0326 14.4998 13.3328 14.2003 13.333 13.8337V5.83374H2.66602Z" fill="#494E50"/>
+  </svg>
+)
 
 interface ScheduleBusPopupProps {
   isOpen: boolean
@@ -17,6 +24,50 @@ interface ScheduleBusPopupProps {
   selectedDate?: Date
 }
 
+// Helper function to calculate arrival time (5 minutes before departure)
+const calculateArrivalTime = (hour: string, minute: string, ampm: string) => {
+  // Create a base date to work with
+  const baseDate = new Date()
+  
+  // Parse the departure time
+  const hourNum = parseInt(hour)
+  const minuteNum = parseInt(minute)
+  const isPM = ampm === "PM"
+  
+  // Convert to 24-hour format for calculations
+  let hour24 = hourNum
+  if (isPM && hourNum !== 12) hour24 += 12
+  if (!isPM && hourNum === 12) hour24 = 0
+  
+  // Set the time
+  const departureTime = set(baseDate, {
+    hours: hour24,
+    minutes: minuteNum,
+    seconds: 0,
+    milliseconds: 0
+  })
+  
+  // Calculate arrival time (5 minutes before)
+  const arrivalTime = subMinutes(departureTime, 5)
+  
+  // Format back to 12-hour format
+  let arrivalHour = arrivalTime.getHours()
+  const arrivalMinute = arrivalTime.getMinutes()
+  let arrivalAmPm = "AM"
+  
+  if (arrivalHour >= 12) {
+    arrivalAmPm = "PM"
+    if (arrivalHour > 12) arrivalHour -= 12
+  }
+  if (arrivalHour === 0) arrivalHour = 12
+  
+  return {
+    hour: arrivalHour.toString().padStart(2, "0"),
+    minute: arrivalMinute.toString().padStart(2, "0"),
+    ampm: arrivalAmPm
+  }
+}
+
 export const ScheduleBusPopup = memo(function ScheduleBusPopup({
   isOpen,
   onClose,
@@ -25,14 +76,15 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 }: ScheduleBusPopupProps) {
   const [mounted, setMounted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const dateInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     source: "Macro Campus",
-    destination: "Micro Campus",
+    destination: "Micro Campus", // Default destination based on default source
     departureHour: "10",
     departureMinute: "00",
     departureAmPm: "AM",
-    arrivalHour: "10",
-    arrivalMinute: "30",
+    arrivalHour: "09",
+    arrivalMinute: "55",
     arrivalAmPm: "AM",
     date: format(selectedDate, "yyyy-MM-dd")
   })
@@ -49,6 +101,22 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
       date: format(selectedDate, "yyyy-MM-dd")
     }))
   }, [selectedDate])
+
+  // Update arrival time whenever departure time changes
+  useEffect(() => {
+    const arrivalTime = calculateArrivalTime(
+      formData.departureHour,
+      formData.departureMinute,
+      formData.departureAmPm
+    )
+    
+    setFormData(prev => ({
+      ...prev,
+      arrivalHour: arrivalTime.hour,
+      arrivalMinute: arrivalTime.minute,
+      arrivalAmPm: arrivalTime.ampm
+    }))
+  }, [formData.departureHour, formData.departureMinute, formData.departureAmPm])
 
   if (!mounted) return null
 
@@ -70,13 +138,9 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
     // Validate time format
     const departureHour = parseInt(formData.departureHour)
     const departureMinute = parseInt(formData.departureMinute)
-    const arrivalHour = parseInt(formData.arrivalHour)
-    const arrivalMinute = parseInt(formData.arrivalMinute)
 
     if (isNaN(departureHour) || departureHour < 1 || departureHour > 12 ||
-        isNaN(departureMinute) || departureMinute < 0 || departureMinute > 59 ||
-        isNaN(arrivalHour) || arrivalHour < 1 || arrivalHour > 12 ||
-        isNaN(arrivalMinute) || arrivalMinute < 0 || arrivalMinute > 59) {
+        isNaN(departureMinute) || departureMinute < 0 || departureMinute > 59) {
       setError("Invalid time format")
       return false
     }
@@ -114,10 +178,30 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
 
   const handleInputChange = (field: string, value: string) => {
     setError(null) // Clear error on input change
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+    
+    if (field === 'source') {
+      // Automatically set destination based on source
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+        destination: value === "Macro Campus" ? "Micro Campus" : "Macro Campus"
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }))
+    }
+  }
+
+  // Format date as MM/DD/YYYY
+  const formattedDate = format(new Date(formData.date), "MM/dd/yyyy")
+
+  const handleCalendarClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent the click from bubbling to the text input
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker()
+    }
   }
 
   return (
@@ -125,137 +209,168 @@ export const ScheduleBusPopup = memo(function ScheduleBusPopup({
       id="schedule-bus"
       isOpen={isOpen}
       onClose={onClose}
-      className="w-[500px] max-w-[95vw] p-6"
-      >
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Schedule Bus</h2>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-200 rounded-lg">
-          {error}
-        </div>
-      )}
-        
-        <div className="space-y-4">
+      className="w-[450px] max-w-[95vw] p-0 rounded-xl overflow-hidden shadow-2xl bg-white"
+    >
+      {/* Header */}
+      <div className="bg-blue-600 px-6 py-3">
+        <h2 className="text-white font-semibold text-xl">Schedule Bus</h2>
+      </div>
+
+      {/* Content */}
+      <div className="px-8 py-6">
+        <form className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Starting Stop */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Starting Stop</label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Source</label>
+          <div className="flex items-center">
+            <label className="w-[140px] text-gray-700 font-medium">Starting Stop</label>
+            <div className="flex-1 flex justify-end">
               <select 
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                className="border border-gray-300 rounded-md px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={formData.source}
                 onChange={(e) => handleInputChange("source", e.target.value)}
               >
-                  <option>Macro Campus</option>
-                <option>Micro Campus</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Destination</label>
-              <select 
-                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                value={formData.destination}
-                onChange={(e) => handleInputChange("destination", e.target.value)}
-              >
-                  <option>Micro Campus</option>
                 <option>Macro Campus</option>
-                </select>
-              </div>
+                <option>Micro Campus</option>
+              </select>
             </div>
           </div>
 
-        {/* Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-          <input 
-            type="date" 
-            className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-            value={formData.date}
-            onChange={(e) => handleInputChange("date", e.target.value)}
-            min={format(new Date(), "yyyy-MM-dd")}
-          />
-        </div>
+          {/* Destination */}
+          <div className="flex items-center">
+            <label className="w-[140px] text-gray-700 font-medium">Destination</label>
+            <div className="flex-1 flex justify-end">
+              <select 
+                className="border border-gray-300 rounded-md px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-100 text-gray-500 cursor-not-allowed"
+                value={formData.destination}
+                disabled
+              >
+                <option>{formData.destination}</option>
+              </select>
+            </div>
+          </div>
 
           {/* Departure Time */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Departure Time</label>
-            <div className="flex items-center gap-2">
-            <input 
-              type="number" 
-              min="1" 
-              max="12" 
-              className="w-16 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent" 
-              value={formData.departureHour}
-              onChange={(e) => handleInputChange("departureHour", e.target.value.padStart(2, "0"))}
-            />
-              <span className="text-gray-500">:</span>
-            <input 
-              type="number" 
-              min="0" 
-              max="59" 
-              className="w-16 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent" 
-              value={formData.departureMinute}
-              onChange={(e) => handleInputChange("departureMinute", e.target.value.padStart(2, "0"))}
-            />
-            <select 
-              className="w-20 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-              value={formData.departureAmPm}
-              onChange={(e) => handleInputChange("departureAmPm", e.target.value)}
-            >
-                <option>AM</option>
-                <option>PM</option>
-              </select>
+          <div className="flex items-center">
+            <label className="w-[140px] text-gray-700 font-medium">Departure Time</label>
+            <div className="flex-1 flex justify-end">
+              <div className="w-48 flex space-x-2">
+                <select 
+                  className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formData.departureHour}
+                  onChange={(e) => handleInputChange("departureHour", e.target.value)}
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(hour => (
+                    <option key={hour} value={hour.toString().padStart(2, "0")}>
+                      {hour.toString().padStart(2, "0")}
+                    </option>
+                  ))}
+                </select>
+                <select 
+                  className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formData.departureMinute}
+                  onChange={(e) => handleInputChange("departureMinute", e.target.value)}
+                >
+                  {Array.from({ length: 60 }, (_, i) => i).map(minute => (
+                    <option key={minute} value={minute.toString().padStart(2, "0")}>
+                      {minute.toString().padStart(2, "0")}
+                    </option>
+                  ))}
+                </select>
+                <select 
+                  className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formData.departureAmPm}
+                  onChange={(e) => handleInputChange("departureAmPm", e.target.value)}
+                >
+                  <option>AM</option>
+                  <option>PM</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Arrival Time */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Arrival Time</label>
-            <div className="flex items-center gap-2">
-            <input 
-              type="number" 
-              min="1" 
-              max="12" 
-              className="w-16 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent" 
-              value={formData.arrivalHour}
-              onChange={(e) => handleInputChange("arrivalHour", e.target.value.padStart(2, "0"))}
-            />
-              <span className="text-gray-500">:</span>
-            <input 
-              type="number" 
-              min="0" 
-              max="59" 
-              className="w-16 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent" 
-              value={formData.arrivalMinute}
-              onChange={(e) => handleInputChange("arrivalMinute", e.target.value.padStart(2, "0"))}
-            />
-            <select 
-              className="w-20 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-              value={formData.arrivalAmPm}
-              onChange={(e) => handleInputChange("arrivalAmPm", e.target.value)}
-            >
-                <option>AM</option>
-                <option>PM</option>
-              </select>
+          <div className="flex items-center">
+            <label className="w-[140px] text-gray-700 font-medium">Arrival Time</label>
+            <div className="flex-1 flex justify-end">
+              <div className="w-48 flex space-x-2">
+                <select 
+                  className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 bg-gray-100 text-gray-500 cursor-not-allowed"
+                  value={formData.arrivalHour}
+                  disabled
+                >
+                  <option>{formData.arrivalHour}</option>
+                </select>
+                <select 
+                  className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 bg-gray-100 text-gray-500 cursor-not-allowed"
+                  value={formData.arrivalMinute}
+                  disabled
+                >
+                  <option>{formData.arrivalMinute}</option>
+                </select>
+                <select 
+                  className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 bg-gray-100 text-gray-500 cursor-not-allowed"
+                  value={formData.arrivalAmPm}
+                  disabled
+                >
+                  <option>{formData.arrivalAmPm}</option>
+                </select>
+              </div>
             </div>
           </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Schedule
-          </button>
-        </div>
+          {/* Date of Departure */}
+          <div className="flex items-center">
+            <label className="w-[140px] text-gray-700 font-medium whitespace-nowrap">Date of Departure</label>
+            <div className="flex-1 flex justify-end">
+              <div className="relative w-48">
+                <input 
+                  type="text" 
+                  className="border border-gray-300 rounded-md px-3 py-1.5 w-full pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  value={formattedDate}
+                  readOnly
+                  onClick={() => dateInputRef.current?.showPicker()}
+                />
+                <input 
+                  ref={dateInputRef}
+                  type="date" 
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  value={formData.date}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  min={format(new Date(), "yyyy-MM-dd")}
+                />
+                <div 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                  onClick={handleCalendarClick}
+                >
+                  <CalendarIcon />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-4 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-200 text-gray-700 px-5 py-2 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2 rounded-md hover:from-blue-600 hover:to-purple-700 transition-colors"
+            >
+              Schedule
+            </button>
+          </div>
+        </form>
       </div>
     </Modal>
   )

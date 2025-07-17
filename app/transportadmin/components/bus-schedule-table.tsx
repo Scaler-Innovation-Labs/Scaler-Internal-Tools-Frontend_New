@@ -27,6 +27,16 @@ const formatStatus = (status: string | undefined): StatusType => {
   return upperStatus in statusColors ? upperStatus : 'SCHEDULED'
 }
 
+// Helper function to convert 24h to 12h format
+const formatTo12Hour = (time: string) => {
+  if (!time) return ''
+  const [hours, minutes] = time.split(':')
+  const hour = parseInt(hours)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${minutes} ${ampm}`
+}
+
 // Memoize the empty state component
 const EmptyState = memo(function EmptyState() {
   return (
@@ -68,7 +78,7 @@ const ScheduleRow = memo(function ScheduleRow({ schedule, index, onEdit, onDelet
       </td>
       <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
         <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-          {schedule.departureTime}
+          {formatTo12Hour(schedule.departureTime)}
         </span>
       </td>
       <td className="w-[140px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
@@ -76,7 +86,7 @@ const ScheduleRow = memo(function ScheduleRow({ schedule, index, onEdit, onDelet
       </td>
       <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
         <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-          {schedule.arrivalTime}
+          {formatTo12Hour(schedule.arrivalTime)}
         </span>
       </td>
       <td className="w-[140px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
@@ -139,7 +149,7 @@ const MobileScheduleCard = memo(function MobileScheduleCard({ schedule, index, o
           <div className="flex items-center space-x-3">
             <ClockIcon size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
             <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-base font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              {schedule.departureTime}
+              {formatTo12Hour(schedule.departureTime)}
             </span>
           </div>
           <div className="flex items-center space-x-3">
@@ -158,7 +168,7 @@ const MobileScheduleCard = memo(function MobileScheduleCard({ schedule, index, o
           <div className="flex items-center space-x-3">
             <ClockIcon size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
             <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-base font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              {schedule.arrivalTime}
+              {formatTo12Hour(schedule.arrivalTime)}
             </span>
           </div>
           <div className="flex items-center space-x-3">
