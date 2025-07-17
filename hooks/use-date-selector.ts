@@ -13,7 +13,7 @@ export interface DateSelectorHook {
 // Get today's date in YYYY-MM-DD format
 const getTodayDate = (): string => {
   const today = new Date()
-  return today.toISOString().split('T')[0]
+  return today.toISOString().split('T')[0] || ''
 }
 
 // Format date for display
@@ -36,7 +36,7 @@ const addDays = (dateString: string, days: number): string => {
   try {
     const date = new Date(dateString)
     date.setDate(date.getDate() + days)
-    return date.toISOString().split('T')[0]
+    return date.toISOString().split('T')[0] || ''
   } catch {
     return dateString
   }

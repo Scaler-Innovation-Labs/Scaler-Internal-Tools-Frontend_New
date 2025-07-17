@@ -47,6 +47,7 @@ const getApiBaseUrl = (): string => {
 const formatTime = (time: string): string => {
   try {
     const [hours, minutes] = time.split(':')
+    if (!hours || !minutes) return time
     const hour = parseInt(hours, 10)
     const ampm = hour >= 12 ? 'PM' : 'AM'
     const displayHour = hour % 12 || 12
@@ -105,7 +106,7 @@ const transformSchedulesForDisplay = (schedules: BusSchedule[]): DisplayBusSched
 // Get today's date in YYYY-MM-DD format
 const getTodayDate = (): string => {
   const today = new Date()
-  return today.toISOString().split('T')[0]
+  return today.toISOString().split('T')[0] || ''
 }
 
 export const useBusSchedules = create<BusScheduleState>()(
