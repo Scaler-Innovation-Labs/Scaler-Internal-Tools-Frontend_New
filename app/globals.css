@@ -69,7 +69,7 @@
     --ring: 212.7 26.8% 83.9%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -131,7 +131,7 @@
     focus-visible: outline 2px solid hsl(var(--ring));
   }
 }
-
+}
 @layer utilities {
   /* Modern scroll optimizations */
   .scrollbar-hide {

@@ -6,7 +6,7 @@ import { format, addDays, subDays } from "date-fns";
 import { BusScheduleTable } from "./components/bus-schedule-table";
 import { ScheduleBusPopup } from "./components/schedule-bus-popup";
 import { ImportantNotes } from "./components/important-notes";
-import { useTransport } from "@/hooks/use-transport";
+import { useTransport } from "@/hooks/use-bus-schedules";
 import type { BusScheduleCreateDto, BusScheduleUpdateDto } from "@/lib/transport-api";
 import type { BusSchedule } from "./types";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ const REFRESH_INTERVAL = config.ui.refreshIntervals.busSchedules;
 // Custom Calendar Icon component
 const CustomCalendarIcon = () => (
   <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 1.16675C12.3665 1.16693 12.666 1.46718 12.666 1.83374V2.49976H13.333C14.0663 2.49976 14.666 3.10041 14.666 3.83374V14.4998C14.666 15.2331 14.0663 15.8337 13.333 15.8337H2.66602C1.93283 15.8336 1.33301 15.233 1.33301 14.4998V3.83374C1.33301 3.10052 1.93283 2.49993 2.66602 2.49976H3.33301V1.83374C3.33301 1.46707 3.63333 1.16675 4 1.16675C4.36652 1.16693 4.66602 1.46718 4.66602 1.83374V2.49976H11.333V1.83374C11.333 1.46707 11.6333 1.16675 12 1.16675ZM2.66602 5.83374V13.8337C2.66619 14.2003 2.96645 14.4998 3.33301 14.4998H12.666C13.0326 14.4998 13.3328 14.2003 13.333 13.8337V5.83374H2.66602Z" fill="#494E50"/>
+    <path d="M8 9.3H12.4444V13.3H8V9.3ZM14.2222 2.1H13.3333V0.5H11.5556V2.1H4.44444V0.5H2.66667V2.1H1.77778C0.8 2.1 0 2.82 0 3.7V14.9C0 15.78 0.8 16.5 1.77778 16.5H14.2222C15.2 16.5 16 15.78 16 14.9V3.7C16 2.82 15.2 2.1 14.2222 2.1ZM14.2222 3.7V5.3H1.77778V3.7H14.2222ZM1.77778 14.9V6.9H14.2222V14.9H1.77778Z" fill="#4D4D4D"/>
   </svg>
 )
 
@@ -47,9 +47,11 @@ export default function TransportAdminPage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<BusSchedule | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const dateInputRef = useRef<HTMLInputElement>(null);
-  const { schedules, loading, error, fetchSchedulesByDate, createSchedule, updateSchedule, deleteSchedule } = useTransport({ isAdmin: true });
+  const [fromDate, setFromDate] = useState(new Date());
+  const [toDate, setToDate] = useState(new Date());
+  const fromDateInputRef = useRef<HTMLInputElement>(null);
+  const toDateInputRef = useRef<HTMLInputElement>(null);
+  const { schedules, loading, error, fetchSchedulesByDateRange, createSchedule, updateSchedule, deleteSchedule } = useTransport({ isAdmin: true });
 
   // Transform schedules to match the expected format
   const transformedSchedules: BusSchedule[] = schedules.map(s => ({
@@ -71,34 +73,38 @@ export default function TransportAdminPage() {
   // Load initial data and set up automatic refresh
   useEffect(() => {
     // Initial fetch
-    fetchSchedulesByDate(selectedDate);
+    fetchSchedulesByDateRange(fromDate, toDate);
 
     // Set up periodic refresh
     const intervalId = setInterval(() => {
-      fetchSchedulesByDate(selectedDate);
+      fetchSchedulesByDateRange(fromDate, toDate);
     }, REFRESH_INTERVAL);
 
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [fetchSchedulesByDate, selectedDate]);
+  }, [fetchSchedulesByDateRange, fromDate, toDate]);
 
-  const handleDateChange = async (date: Date) => {
-    setSelectedDate(date);
-    try {
-      await fetchSchedulesByDate(date);
-    } catch (error) {
-      console.error('Failed to fetch schedules:', error);
+  const handleDateChange = async (date: Date, type: 'from' | 'to') => {
+    if (type === 'from') {
+      setFromDate(date);
+      // If from date is after to date, update to date
+      if (date > toDate) {
+        setToDate(date);
+      }
+    } else {
+      setToDate(date);
+      // If to date is before from date, update from date
+      if (date < fromDate) {
+        setFromDate(date);
+      }
     }
+    await fetchSchedulesByDateRange(type === 'from' ? date : fromDate, type === 'to' ? date : toDate);
   };
 
-  const handlePrevDate = async () => {
-    const newDate = subDays(selectedDate, 1);
-    await handleDateChange(newDate);
-  };
-
-  const handleNextDate = async () => {
-    const newDate = addDays(selectedDate, 1);
-    await handleDateChange(newDate);
+  const formatDateWithSuffix = (date: Date) => {
+    const day = date.getDate();
+    const suffix = ['th', 'st', 'nd', 'rd'][day % 10 > 3 ? 0 : (day % 100 - day % 10 !== 10 ? day % 10 : 0)];
+    return format(date, `d'${suffix}' MMMM yyyy`);
   };
 
   const handleScheduleSubmit = async (scheduleData: {
@@ -121,7 +127,7 @@ export default function TransportAdminPage() {
       await createSchedule(createDto);
       setIsPopupOpen(false);
       // Immediately fetch updated schedules
-      await fetchSchedulesByDate(selectedDate);
+      await fetchSchedulesByDateRange(fromDate, toDate);
     } catch (err) {
       console.error('Failed to create schedule:', err);
     }
@@ -137,7 +143,7 @@ export default function TransportAdminPage() {
       try {
         await deleteSchedule(schedule.id);
         // Immediately fetch updated schedules
-        await fetchSchedulesByDate(selectedDate);
+        await fetchSchedulesByDateRange(fromDate, toDate);
       } catch (err) {
         console.error('Failed to delete schedule:', err);
       }
@@ -170,15 +176,18 @@ export default function TransportAdminPage() {
       await updateSchedule(selectedSchedule.id, updateDto);
       setIsEditPopupOpen(false);
       // Immediately fetch updated schedules
-      await fetchSchedulesByDate(selectedDate);
+      await fetchSchedulesByDateRange(fromDate, toDate);
     } catch (err) {
       console.error('Failed to update schedule:', err);
     }
   };
 
   const handleCalendarClick = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker();
+    if (fromDateInputRef.current) {
+      fromDateInputRef.current.showPicker();
+    }
+    if (toDateInputRef.current) {
+      toDateInputRef.current.showPicker();
     }
   };
 
@@ -211,38 +220,50 @@ export default function TransportAdminPage() {
                     + Create
                   </button>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                  <button
-                    onClick={handlePrevDate}
-                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                    aria-label="Previous day"
-                  >
-                    <PrevArrowIcon />
-                  </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleCalendarClick}
-                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                      <CustomCalendarIcon />
-                    </button>
-                    <input
-                      type="date"
-                      ref={dateInputRef}
-                      value={format(selectedDate, 'yyyy-MM-dd')}
-                      onChange={(e) => handleDateChange(new Date(e.target.value))}
-                      className="sr-only"
-                    />
-                    <span className="text-sm sm:text-base font-medium">{format(selectedDate, 'd MMMM yyyy')}</span>
-                  </div>
-                  <button
-                    onClick={handleNextDate}
-                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                    aria-label="Next day"
-                  >
-                    <NextArrowIcon />
-                  </button>
 
+                {/* Date Range Picker */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="fromDate" className="text-xs font-medium text-gray-700">From:</label>
+                    <div className="relative">
+                      <button
+                        onClick={() => fromDateInputRef.current?.showPicker()}
+                        className="flex items-center gap-2 px-2 py-1 bg-[#F5F5F5] rounded-md text-xs text-gray-700 hover:bg-gray-100 font-poppins font-semibold"
+                      >
+                        <CustomCalendarIcon />
+                        <span>{formatDateWithSuffix(fromDate)}</span>
+                      </button>
+                      <input
+                        type="date"
+                        id="fromDate"
+                        ref={fromDateInputRef}
+                        value={format(fromDate, 'yyyy-MM-dd')}
+                        onChange={(e) => handleDateChange(new Date(e.target.value), 'from')}
+                        className="sr-only"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="toDate" className="text-xs font-medium text-gray-700">To:</label>
+                    <div className="relative">
+                      <button
+                        onClick={() => toDateInputRef.current?.showPicker()}
+                        className="flex items-center gap-2 px-2 py-1 bg-[#F5F5F5] rounded-md text-xs text-gray-700 hover:bg-gray-100 font-poppins font-semibold"
+                      >
+                        <CustomCalendarIcon />
+                        <span>{formatDateWithSuffix(toDate)}</span>
+                      </button>
+                      <input
+                        type="date"
+                        id="toDate"
+                        ref={toDateInputRef}
+                        value={format(toDate, 'yyyy-MM-dd')}
+                        onChange={(e) => handleDateChange(new Date(e.target.value), 'to')}
+                        className="sr-only"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -273,7 +294,7 @@ export default function TransportAdminPage() {
           isOpen={isPopupOpen}
           onClose={() => setIsPopupOpen(false)}
           onSubmit={handleScheduleSubmit}
-          selectedDate={selectedDate}
+          selectedDate={fromDate}
         />
 
         {/* Edit Schedule Popup */}
