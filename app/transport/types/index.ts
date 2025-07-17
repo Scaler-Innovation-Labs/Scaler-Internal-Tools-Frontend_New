@@ -1,8 +1,10 @@
 export interface BusSchedule {
   date: string
   day: string
+  /** Time in 24h format (HH:mm) */
   departureTime: string
   from: string
+  /** Time in 24h format (HH:mm) */
   arrivalTime: string
   to: string
   status: 'SCHEDULED' | 'DEPARTED' | 'WAITING' | 'scheduled' | 'departed' | 'waiting'

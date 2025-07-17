@@ -10,6 +10,7 @@ export interface BusScheduleResponseDto {
   dayOfWeek: string
   date: string
   busStatus: string
+  studentsBoarded?: number
 }
 
 export interface BusScheduleSummaryDto {
@@ -21,23 +22,25 @@ export interface BusScheduleSummaryDto {
   dayOfWeek: string
   date: string
   busStatus: string
+  studentsBoarded?: number
 }
 
 export interface BusScheduleCreateDto {
-  source: string
-  destination: string
-  departureTime: string
-  arrivalTime: string
-  date: string
+  source: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  date: string;
 }
 
 export interface BusScheduleUpdateDto {
-  source: string
-  destination: string
-  departureTime: string
-  arrivalTime: string
-  date: string
-  busStatus: string
+  source: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  date: string;
+  busStatus: string;
+  studentsBoarded?: number;
 }
 
 // Base URL from config

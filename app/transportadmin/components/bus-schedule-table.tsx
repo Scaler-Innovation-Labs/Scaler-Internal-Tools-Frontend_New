@@ -1,14 +1,26 @@
 "use client"
 
 import { memo } from "react"
-import { CalendarIcon, ClockIcon, MapPinIcon } from "@/components/ui/icons"
+import { CalendarIcon, ClockIcon, MapPinIcon, UserGroupIcon } from "@heroicons/react/24/outline"
 import { TrashIcon } from "@heroicons/react/24/outline"
 import type { BusSchedule, BusScheduleTableProps } from "../types"
+import { format, parse } from "date-fns"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const EditIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M4 5.00012H3C2.46957 5.00012 1.96086 5.21084 1.58579 5.58591C1.21071 5.96098 1 6.46969 1 7.00012V16.0001C1 16.5306 1.21071 17.0393 1.58579 17.4143C1.96086 17.7894 2.46957 18.0001 3 18.0001H12C12.5304 18.0001 13.0391 17.7894 13.4142 17.4143C13.7893 17.0393 14 16.5306 14 16.0001V15.0001" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M13 3.00011L16 6.00011M17.385 4.58511C17.7788 4.19126 18.0001 3.65709 18.0001 3.10011C18.0001 2.54312 17.7788 2.00895 17.385 1.61511C16.9912 1.22126 16.457 1 15.9 1C15.343 1 14.8088 1.22126 14.415 1.61511L6 10.0001V13.0001H9L17.385 4.58511Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3.47057 4.29407H2.64705C2.21022 4.29407 1.79129 4.4676 1.48241 4.77648C1.17353 5.08536 1 5.50429 1 5.94112V13.3528C1 13.7897 1.17353 14.2086 1.48241 14.5175C1.79129 14.8264 2.21022 14.9999 2.64705 14.9999H10.0588C10.4956 14.9999 10.9145 14.8264 11.2234 14.5175C11.5323 14.2086 11.7058 13.7897 11.7058 13.3528V12.5293" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M10.8823 2.64714L13.3529 5.11771M14.4935 3.95242C14.8178 3.62808 15.0001 3.18818 15.0001 2.72949C15.0001 2.2708 14.8178 1.8309 14.4935 1.50656C14.1692 1.18221 13.7293 1 13.2706 1C12.8119 1 12.372 1.18221 12.0476 1.50656L5.11768 8.41181V10.8824H7.58825L14.4935 3.95242Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const DeleteIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 4H3.33333H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M5.33301 4V2.66667C5.33301 2.31305 5.47348 1.97391 5.72353 1.72386C5.97358 1.47381 6.31272 1.33334 6.66634 1.33334H9.33301C9.68663 1.33334 10.0258 1.47381 10.2758 1.72386C10.5259 1.97391 10.6663 2.31305 10.6663 2.66667V4M12.6663 4V13.3333C12.6663 13.687 12.5259 14.0261 12.2758 14.2762C12.0258 14.5262 11.6866 14.6667 11.333 14.6667H4.66634C4.31272 14.6667 3.97358 14.5262 3.72353 14.2762C3.47348 14.0261 3.33301 13.687 3.33301 13.3333V4H12.6663Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6.66699 7.33334V11.3333" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M9.33301 7.33334V11.3333" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 )
 
@@ -52,56 +64,62 @@ const EmptyState = memo(function EmptyState() {
 })
 
 // Memoize the schedule row component
-const ScheduleRow = memo(function ScheduleRow({ schedule, index, onEdit, onDelete }: { schedule: BusScheduleTableProps['schedules'][0], index: number, onEdit: (schedule: BusScheduleTableProps['schedules'][0]) => void, onDelete: (schedule: BusScheduleTableProps['schedules'][0]) => void }) {
+const ScheduleRow = memo(function ScheduleRow({ schedule, index, onEdit, onDelete }: { 
+  schedule: BusScheduleTableProps['schedules'][0], 
+  index: number, 
+  onEdit: (schedule: BusScheduleTableProps['schedules'][0]) => void, 
+  onDelete: (schedule: BusScheduleTableProps['schedules'][0]) => void 
+}) {
   const status = formatStatus(schedule.status)
+  const parsedDate = parse(schedule.date, 'dd/MM/yyyy', new Date())
+  const formattedDate = format(parsedDate, 'EEE, MMM d, yyyy')
   
   return (
-    <tr 
-      key={`desktop-${index}`} 
-      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-    >
-      <td className="w-[120px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
-        <div className="flex items-center justify-between">
-          <button 
-            onClick={() => onEdit(schedule)}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <span className="text-gray-600 dark:text-gray-300">
-              <EditIcon />
-            </span>
-          </button>
-          <span>{schedule.date}</span>
-        </div>
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+      <td className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+        {formattedDate}
       </td>
-      <td className="w-[100px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
-        {schedule.day}
-      </td>
-      <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+      <td className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !text-center">
+        <span className="inline-flex items-center px-3 sm:px-4 py-1.5 rounded-lg !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
           {formatTo12Hour(schedule.departureTime)}
         </span>
       </td>
-      <td className="w-[140px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+      <td className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
         {schedule.from}
       </td>
-      <td className="w-[140px] px-4 py-4 whitespace-nowrap !text-center">
-        <span className="inline-flex items-center px-2.5 py-1 rounded-lg !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+      <td className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !text-center">
+        <span className="inline-flex items-center px-3 sm:px-4 py-1.5 rounded-lg !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
           {formatTo12Hour(schedule.arrivalTime)}
         </span>
       </td>
-      <td className="w-[140px] px-4 py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+      <td className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
         {schedule.to}
       </td>
-      <td className="w-[120px] px-4 py-4 whitespace-nowrap !text-center">
-        <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center px-4 py-1.5 rounded-full !font-[var(--font-poppins)] !font-medium !text-[14px] !leading-[100%] !tracking-[-1%] min-w-[100px] justify-center ${statusColors[status]}`}>
-            {status.charAt(0) + status.slice(1).toLowerCase()}
-          </span>
+      <td className="w-[10%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !text-center">
+        <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 rounded-full !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] ${statusColors[status]}`}>
+          {status.charAt(0) + status.slice(1).toLowerCase()}
+        </span>
+      </td>
+      <td className="w-[10%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%] !tracking-[-1%] !text-center !align-middle text-gray-900 dark:text-gray-100">
+        {schedule.studentsBoarded || 0}
+      </td>
+      <td className="w-[5%] px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap !text-center">
+        <div className="flex items-center justify-center gap-2">
+          <button 
+            onClick={() => onEdit(schedule)}
+            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <span className="text-[#1A85FF] dark:text-blue-400">
+              <EditIcon />
+            </span>
+          </button>
           <button 
             onClick={() => onDelete(schedule)}
-            className="p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors ml-2"
+            className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
           >
-            <TrashIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <span className="text-red-500 dark:text-red-400">
+              <TrashIcon className="h-4 w-4" />
+            </span>
           </button>
         </div>
       </td>
@@ -110,89 +128,108 @@ const ScheduleRow = memo(function ScheduleRow({ schedule, index, onEdit, onDelet
 })
 
 // Memoize the mobile schedule card component
-const MobileScheduleCard = memo(function MobileScheduleCard({ schedule, index, onEdit, onDelete }: { schedule: BusScheduleTableProps['schedules'][0], index: number, onEdit: (schedule: BusScheduleTableProps['schedules'][0]) => void, onDelete: (schedule: BusScheduleTableProps['schedules'][0]) => void }) {
+const MobileScheduleCard = memo(function MobileScheduleCard({ schedule, index, onEdit, onDelete }: { 
+  schedule: BusScheduleTableProps['schedules'][0], 
+  index: number, 
+  onEdit: (schedule: BusScheduleTableProps['schedules'][0]) => void, 
+  onDelete: (schedule: BusScheduleTableProps['schedules'][0]) => void 
+}) {
   const status = formatStatus(schedule.status)
+  const parsedDate = parse(schedule.date, 'dd/MM/yyyy', new Date())
+  const formattedDate = format(parsedDate, 'EEE, MMM d, yyyy')
   
   return (
     <article
-      key={`mobile-${index}`}
-      className="bg-white dark:bg-black rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-600 w-[95%] mx-auto"
-      aria-label={`Bus schedule for ${schedule.date}`}
+      className="bg-white dark:bg-black rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-600 w-full mx-auto mb-4"
+      aria-label={`Bus schedule for ${formattedDate}`}
     >
-      {/* Mobile view date header */}
+      {/* Date Header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-600">
-        <div className="flex items-center">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <CalendarIcon size={18} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">
+            {formattedDate}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
           <button 
             onClick={() => onEdit(schedule)}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors mr-3"
+            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <span className="text-gray-600 dark:text-gray-300">
+            <span className="text-[#1A85FF] dark:text-blue-400">
               <EditIcon />
             </span>
           </button>
-          <div className="flex items-center space-x-3">
-            <CalendarIcon size={18} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              {schedule.date} • {schedule.day}
+          <button 
+            onClick={() => onDelete(schedule)}
+            className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <span className="text-red-500 dark:text-red-400">
+              <TrashIcon className="h-4 w-4" />
             </span>
-          </div>
+          </button>
         </div>
       </div>
       
       {/* Schedule Details */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="space-y-4">
         {/* Departure */}
-        <div className="space-y-3">
-          <div className="text-sm font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
-            Departure
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ClockIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
+            <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400">Departure</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <ClockIcon size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-base font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              {formatTo12Hour(schedule.departureTime)}
-            </span>
-          </div>
-          <div className="flex items-center space-x-3">
+          <span className="inline-flex items-center px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            {formatTo12Hour(schedule.departureTime)}
+          </span>
+        </div>
+        
+        {/* From/To */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
             <MapPinIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
-            <span className="text-base text-gray-900 dark:text-gray-100">
-              {schedule.from}
-            </span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400">From</span>
           </div>
+          <span className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">{schedule.from}</span>
         </div>
         
         {/* Arrival */}
-        <div className="space-y-3">
-          <div className="text-sm font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">
-            Arrival
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ClockIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
+            <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400">Arrival</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <ClockIcon size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-base font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              {formatTo12Hour(schedule.arrivalTime)}
-            </span>
-          </div>
-          <div className="flex items-center space-x-3">
+          <span className="inline-flex items-center px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+            {formatTo12Hour(schedule.arrivalTime)}
+          </span>
+        </div>
+        
+        {/* To */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
             <MapPinIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
-            <span className="text-base text-gray-900 dark:text-gray-100">
-              {schedule.to}
-            </span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400">To</span>
           </div>
+          <span className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">{schedule.to}</span>
+        </div>
+
+        {/* Students */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <UserGroupIcon size={16} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
+            <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400">Students</span>
+          </div>
+          <span className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {schedule.studentsBoarded || 0}
+          </span>
         </div>
       </div>
 
-      {/* Status Badge in mobile view */}
-      <div className="flex justify-end items-center mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-        <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium min-w-[100px] justify-center ${statusColors[status]}`}>
-            {status.charAt(0) + status.slice(1).toLowerCase()}
-          </span>
-          <button 
-            onClick={() => onDelete(schedule)}
-            className="p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors ml-2"
-          >
-            <TrashIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
-          </button>
-        </div>
+      {/* Status */}
+      <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+        <span className={`inline-flex items-center px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold ${statusColors[status]}`}>
+          {status.charAt(0) + status.slice(1).toLowerCase()}
+        </span>
       </div>
     </article>
   )
@@ -226,7 +263,7 @@ export const BusScheduleTable = memo(function BusScheduleTable({
   if (loading) {
     return (
       <div className="text-center py-12">
-        Loading schedules...
+        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
       </div>
     )
   }
@@ -237,52 +274,42 @@ export const BusScheduleTable = memo(function BusScheduleTable({
 
   return (
     <>
-      {/* Mobile Cards View */}
-      <div className="block md:hidden space-y-4" role="region" aria-label="Bus schedule mobile view">
-        {schedules.map((schedule, index) => (
-          <MobileScheduleCard 
-            key={index} 
-            schedule={schedule} 
-            index={index}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden md:block overflow-hidden" role="region" aria-label="bus schedule table">
-        <table className="min-w-full" role="table">
+      {/* Desktop View */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className="w-full">
           <thead>
             <tr className="bg-[#F5F5F5] dark:bg-black rounded-xl">
-              <th className="first:rounded-l-xl w-[120px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
+              <th className="first:rounded-l-xl w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
                 Date
               </th>
-              <th className="w-[100px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
-                Day
+              <th className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
+                Departure
               </th>
-              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
-                Departure Time
-              </th>
-              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
+              <th className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
                 From
               </th>
-              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
-                Arrival Time
+              <th className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
+                Arrival
               </th>
-              <th className="w-[140px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
+              <th className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
                 To
               </th>
-              <th className="last:rounded-r-xl w-[120px] px-4 py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
+              <th className="w-[10%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
                 Status
+              </th>
+              <th className="w-[10%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
+                Students
+              </th>
+              <th className="last:rounded-r-xl w-[5%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
+                Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-black">
+          <tbody className="bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-700">
             {schedules.map((schedule, index) => (
-              <ScheduleRow 
-                key={index} 
-                schedule={schedule} 
+              <ScheduleRow
+                key={schedule.id}
+                schedule={schedule}
                 index={index}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
@@ -290,6 +317,19 @@ export const BusScheduleTable = memo(function BusScheduleTable({
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile View */}
+      <div className="lg:hidden">
+        {schedules.map((schedule, index) => (
+          <MobileScheduleCard
+            key={schedule.id}
+            schedule={schedule}
+            index={index}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        ))}
       </div>
     </>
   )

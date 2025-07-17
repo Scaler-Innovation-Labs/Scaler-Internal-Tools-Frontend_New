@@ -62,7 +62,8 @@ export default function TransportAdminPage() {
     source: s.source,
     destination: s.destination,
     dayOfWeek: s.dayOfWeek,
-    busStatus: s.busStatus || 'SCHEDULED'
+    busStatus: s.busStatus || 'SCHEDULED',
+    studentsBoarded: s.studentsBoarded || 0
   }));
 
   // Load initial data and set up automatic refresh
@@ -148,6 +149,7 @@ export default function TransportAdminPage() {
     arrivalTime: string;
     date: Date;
     status: string;
+    studentsBoarded?: number;
   }) => {
     if (!selectedSchedule) return;
 
@@ -158,7 +160,8 @@ export default function TransportAdminPage() {
         departureTime: scheduleData.departureTime,
         arrivalTime: scheduleData.arrivalTime,
         date: format(scheduleData.date, 'yyyy-MM-dd'),
-        busStatus: scheduleData.status
+        busStatus: scheduleData.status,
+        studentsBoarded: scheduleData.studentsBoarded
       };
       
       // Update the schedule
@@ -180,71 +183,60 @@ export default function TransportAdminPage() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
-        <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto">
-          <div className="h-auto min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
+        <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto">
+          <div className="h-auto min-h-[120px] sm:min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-8 lg:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">Transport Services</h2>
-              <p className="text-sm sm:text-base text-slate-100 font-normal max-w-[280px] sm:max-w-none">Access campus bus schedules and track real-time bus locations.</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setIsPopupOpen(true)}
-                disabled={loading}
-                className="bg-white text-blue-600 hover:bg-white/90"
-              >
-                Create Schedule
-              </Button>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">Transport Services</h2>
+              <p className="text-sm sm:text-base lg:text-lg text-slate-100 font-normal">Access campus bus schedules and track real-time bus locations.</p>
             </div>
           </div>
         </div>
 
-        <div className="w-full max-w-6xl px-2 sm:px-8 mx-auto z-10 mb-12">
+        <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto z-10 mb-12">
           <div className="bg-white dark:bg-black rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <div className="px-10 py-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bus Schedule</h2>
-                <div className="flex items-center gap-4">
+            <div className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-8 mb-8">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bus Schedule</h2>
+                  <button
+                    onClick={() => setIsPopupOpen(true)}
+                    disabled={loading}
+                    className="h-[30px] w-[84px] bg-[#1A85FF] hover:bg-blue-600 text-white text-sm font-semibold rounded-[12px] flex items-center justify-center"
+                  >
+                    + Create
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                  <button
+                    onClick={handlePrevDate}
+                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                    aria-label="Previous day"
+                  >
+                    <PrevArrowIcon />
+                  </button>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={handlePrevDate}
+                      onClick={handleCalendarClick}
                       className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                      aria-label="Previous day"
                     >
-                      <PrevArrowIcon />
+                      <CustomCalendarIcon />
                     </button>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        className="border border-gray-300 rounded-md px-3 py-1.5 w-48 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
-                        value={format(selectedDate, "MM/dd/yyyy")}
-                        readOnly
-                        onClick={handleCalendarClick}
-                      />
-                      <input 
-                        ref={dateInputRef}
-                        type="date" 
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                        value={format(selectedDate, 'yyyy-MM-dd')}
-                        onChange={(e) => handleDateChange(new Date(e.target.value))}
-                        min={format(new Date(), "yyyy-MM-dd")}
-                      />
-                      <div 
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-                        onClick={handleCalendarClick}
-                      >
-                        <CustomCalendarIcon />
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleNextDate}
-                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                      aria-label="Next day"
-                    >
-                      <NextArrowIcon />
-                    </button>
+                    <input
+                      type="date"
+                      ref={dateInputRef}
+                      value={format(selectedDate, 'yyyy-MM-dd')}
+                      onChange={(e) => handleDateChange(new Date(e.target.value))}
+                      className="sr-only"
+                    />
+                    <span className="text-sm sm:text-base font-medium">{format(selectedDate, 'd MMMM yyyy')}</span>
                   </div>
+                  <button
+                    onClick={handleNextDate}
+                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                    aria-label="Next day"
+                  >
+                    <NextArrowIcon />
+                  </button>
                 </div>
               </div>
 
