@@ -7,34 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowPathIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { DocumentCard } from '@/components/ui/document-card';
 import { DocumentFilters } from '@/components/ui/document-filters';
-
-// Sample data - replace with actual data from API
-const sampleDocuments = [
-  {
-    title: "Academic Calendar 2024-25",
-    postedDate: "May 04, 2025",
-    fileType: "PDF",
-    updatedDate: "June 15, 2025",
-    tags: ["#schedule", "#calendar", "#important"],
-    badgeType: "Important" as const,
-  },
-  {
-    title: "Student Handbook",
-    postedDate: "April 15, 2025",
-    fileType: "DOC",
-    updatedDate: "April 20, 2025",
-    tags: ["#guidelines", "#rules"],
-    badgeType: "Administrative" as const,
-  },
-  {
-    title: "Annual Day Celebration",
-    postedDate: "March 30, 2025",
-    fileType: "PDF",
-    updatedDate: "April 01, 2025",
-    tags: ["#celebration", "#cultural"],
-    badgeType: "Events" as const,
-  },
-];
+import { sampleDocuments } from '@/lib/data/document-samples';
 
 export default function DocumentPage() {
   const [activeFilter, setActiveFilter] = useState('All');

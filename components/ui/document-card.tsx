@@ -1,5 +1,6 @@
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import { Badge } from './badge';
+import { badgeStyles } from '@/lib/constants/document';
 
 interface DocumentCardProps {
   title: string;
@@ -9,21 +10,6 @@ interface DocumentCardProps {
   tags: string[];
   badgeType: 'Important' | 'Events' | 'Administrative';
 }
-
-const badgeStyles = {
-  Important: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-600'
-  },
-  Events: {
-    bg: 'bg-purple-50',
-    text: 'text-purple-600'
-  },
-  Administrative: {
-    bg: 'bg-green-50',
-    text: 'text-green-600'
-  }
-};
 
 export function DocumentCard({
   title,
@@ -56,26 +42,16 @@ export function DocumentCard({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
-          <span className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 shadow-[0_2px_4px_rgb(0,0,0,0.05)]">
-            {fileType}
+      {/* Tags Section */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {tags.map((tag, index) => (
+          <span 
+            key={index}
+            className="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 shadow-[0_2px_4px_rgb(0,0,0,0.05)]"
+          >
+            {tag}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            Last updated: {updatedDate}
-          </span>
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag, index) => (
-            <span 
-              key={index}
-              className="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 shadow-[0_2px_4px_rgb(0,0,0,0.05)]"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        ))}
       </div>
     </div>
   );

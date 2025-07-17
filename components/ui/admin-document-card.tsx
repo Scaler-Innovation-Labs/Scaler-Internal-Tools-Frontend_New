@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DocumentIcon, PencilIcon, TrashIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { VersionHistoryModal } from './version-history-modal';
+import { badgeStyles } from '@/lib/constants/document';
 
 interface AdminDocumentCardProps {
   title: string;
@@ -21,21 +22,6 @@ interface AdminDocumentCardProps {
     viewUrl: string;
   }>;
 }
-
-const badgeStyles = {
-  Important: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-600'
-  },
-  Events: {
-    bg: 'bg-purple-50',
-    text: 'text-purple-600'
-  },
-  Administrative: {
-    bg: 'bg-green-50',
-    text: 'text-green-600'
-  }
-};
 
 export function AdminDocumentCard({
   title,
@@ -66,39 +52,25 @@ export function AdminDocumentCard({
   return (
     <>
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)] transition-shadow duration-300">
-        <div className="flex justify-between">
-          {/* Left Section */}
-          <div className="flex-1">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shadow-[0_4px_10px_rgb(59,130,246,0.2)]">
-                  <DocumentIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shadow-[0_4px_10px_rgb(59,130,246,0.2)]">
+                <DocumentIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
-                    {title}
-                  </h3>
-                  <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600" />
-                </div>
-                <div className="mt-1 space-y-1">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Posted: {postedDate}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    By: {uploadedBy}
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-600 dark:text-gray-300">
-                      {fileType} • {fileSize}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Updated: {updatedDate}
-                    </span>
-                  </div>
-                </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                {title}
+              </h3>
+              <div className="mt-1 flex items-center space-x-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Posted on {postedDate}
+                </span>
+                <span className="text-sm text-gray-400 dark:text-gray-500">•</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  By {uploadedBy}
+                </span>
               </div>
             </div>
           </div>
