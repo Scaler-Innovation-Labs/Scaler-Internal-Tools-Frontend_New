@@ -3,7 +3,15 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from 'react-dom';
 import { useAuth } from "@/hooks/use-auth";
 
-export default function TicketOverview({ refreshTickets }: { refreshTickets?: () => void }) {
+// Helper to shorten file names
+function shortenFileName(name: string, maxLength = 16) {
+  if (name.length <= maxLength) return name;
+  const ext = name.includes('.') ? '.' + name.split('.').pop() : '';
+  const base = name.replace(ext, '');
+  return base.slice(0, maxLength - 3 - ext.length) + '...' + ext;
+}
+
+export default function TicketOverview({ tickets, setTickets, refreshTickets }: { tickets: any[], setTickets: (tickets: any[]) => void, refreshTickets: () => Promise<void> }) {
   const { fetchWithAuth } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [stats, setStats] = useState({ total: 0, open: 0, resolved: 0, resolutionRate: 0 });
@@ -24,31 +32,30 @@ export default function TicketOverview({ refreshTickets }: { refreshTickets?: ()
       setFiles(selected);
     }
   };
+  // Remove file handler
+  const handleRemoveFile = (name: string) => {
+    setFiles(prev => prev.filter(file => file.name !== name));
+  };
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const [dragActive, setDragActive] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchStats() {
-      setLoading(true);
-      setError(null);
-      try {
-        // Move useAuth inside the effect to avoid dependency loop
-        const { fetchWithAuth } = require("@/hooks/use-auth").useAuth();
-        const res = await fetchWithAuth(`${backendUrl}/api/issues`);
-        if (!res.ok) throw new Error('Failed to fetch tickets');
-        const data = await res.json();
-        const total = data.length;
-        const open = data.filter((t: any) => t.status === 'open' || t.status === 'Open').length;
-        const resolved = data.filter((t: any) => t.status === 'resolved' || t.status === 'Resolved').length;
-        const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
-        setStats({ total, open, resolved, resolutionRate });
-      } catch (err: any) {
-        setError(err.message || 'Unknown error');
-      } finally {
-        setLoading(false);
-      }
+    // Calculate stats from tickets prop
+    setLoading(true);
+    setError(null);
+    try {
+      const total = tickets.length;
+      const open = tickets.filter((t: any) => t.status === 'open' || t.status === 'Open').length;
+      const resolved = tickets.filter((t: any) => t.status === 'resolved' || t.status === 'Resolved').length;
+      const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+      setStats({ total, open, resolved, resolutionRate });
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
+    } finally {
+      setLoading(false);
     }
-    fetchStats();
-  }, []); // Only run once on mount
+  }, [tickets]);
 
   useEffect(() => {
     if (showModal) {
@@ -125,6 +132,12 @@ export default function TicketOverview({ refreshTickets }: { refreshTickets?: ()
             <form className="px-6 py-6  flex flex-col gap-3" onSubmit={async e => {
               e.preventDefault();
               setSubmitting(true);
+              setImageError(null);
+              if (files.length === 0) {
+                setImageError('Please upload at least one image.');
+                setSubmitting(false);
+                return;
+              }
               try {
                 const today = new Date().toISOString().slice(0, 10);
                 const formData = new FormData();
@@ -141,7 +154,8 @@ export default function TicketOverview({ refreshTickets }: { refreshTickets?: ()
                 if (!res.ok) throw new Error('Failed to create ticket');
                 setShowModal(false);
                 setTitle(""); setLocation(""); setPriority(""); setDescription(""); setFiles([]);
-                if (refreshTickets) refreshTickets();
+                // Re-fetch tickets and update parent state
+                await refreshTickets();
               } catch (err) {
                 alert('Failed to create ticket');
               } finally {
@@ -172,6 +186,8 @@ export default function TicketOverview({ refreshTickets }: { refreshTickets?: ()
                     <option>Low</option>
                     <option>Medium</option>
                     <option>High</option>
+                    <option>Critical</option>
+                    <option>Blocker</option>
                   </select>
                 </div>
               </div>
@@ -182,24 +198,65 @@ export default function TicketOverview({ refreshTickets }: { refreshTickets?: ()
               {/* Attachments */}
               <div>
                 <label className="block text-gray-700 font-semibold mb-1">Attachments</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                  className="mb-2"
-                />
-                <div className="flex gap-2 flex-wrap">
-                  {files.map(file => (
-                    <img
-                      key={file.name}
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd' }}
-                    />
-                  ))}
+                <div
+                  className={`border-2 border-dashed rounded-lg p-4 flex items-center gap-4 min-h-[120px] transition-colors ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white'}`}
+                  onClick={e => {
+                    if ((e.target as HTMLElement).closest('.remove-btn')) return;
+                    document.getElementById('file-upload-input')?.click();
+                  }}
+                  onDragOver={e => { e.preventDefault(); setDragActive(true); }}
+                  onDragLeave={e => { e.preventDefault(); setDragActive(false); }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setDragActive(false);
+                    const droppedFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                    setFiles(prev => [...prev, ...droppedFiles]);
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="Upload images"
+                  style={{ justifyContent: files.length === 0 ? 'center' : 'flex-start' }}
+                >
+                  {files.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center w-full">
+                      <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4" /><rect x="4" y="16" width="16" height="4" rx="2" /></svg>
+                      <span className="text-gray-500">Drag and drop images here or click to browse</span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-4 flex-wrap items-center">
+                      {files.map(file => (
+                        <div key={file.name} className="flex flex-col items-center relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 12, border: '1px solid #ddd' }}
+                          />
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            className="remove-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-90 hover:opacity-100 z-10"
+                            onClick={e => { e.stopPropagation(); handleRemoveFile(file.name); }}
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            &times;
+                          </button>
+                          <span className="mt-2 text-xs text-gray-700 break-all text-center w-16">{shortenFileName(file.name)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    id="file-upload-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </div>
               </div>
+              {/* Show image error if present */}
+              {imageError && <div className="text-red-500 text-xs mt-2">{imageError}</div>}
               <div className="border border-blue-200 bg-blue-50 rounded-xl px-4 py-2 flex items-center justify-between ">
                 <div className="flex items-center gap-3">
                   <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5.25-3.5 10-7 10s-7-4.75-7-10V6l7-4z" /></svg>

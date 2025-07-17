@@ -56,7 +56,7 @@ export default function TicketList({ tickets }: { tickets: Ticket[] }) {
             </div>
           </div>
           <div className="flex flex-row gap-2 items-center mt-2 md:mt-0">
-            <Badge variant="outline" className={`border ${priorityColors[ticket.priority] || ''}`}>{ticket.priority}</Badge>
+            <Badge variant="outline" className={`border ${priorityColors[ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1).toLowerCase()] || ''}`}>{ticket.priority}</Badge>
             <Badge variant="outline" className={`border ${statusColors[ticket.status] || ''}`}>{ticket.status}</Badge>
             {ticket.attachments.length > 0 && (
               <span className="text-xs text-gray-400 flex items-center gap-1 ml-2">

@@ -9,7 +9,10 @@ import TicketOverview from "./components/ticket-overview";
 const statusOptions = ["all", "open", "in_progress", "resolved", "closed"];
 const priorityOptions = ["all", "low", "medium", "high", "critical"];
 const sortOptions = [
-  { value: "date", label: "Date (Newest)" },
+  { value: "date_desc", label: "Date (Newest)" },
+  { value: "date_asc", label: "Date (Oldest)" },
+  { value: "priority", label: "Priority" },
+  { value: "status", label: "Status" },
 ];
 
 export default function TicketsPage() {
@@ -21,6 +24,8 @@ export default function TicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const { fetchWithAuth } = useAuth();
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const [sortBy, setSortBy] = useState("date_desc");
+  const [showSort, setShowSort] = useState(false);
 
   // Move fetchTickets out so it can be called from children
   const fetchTickets = async () => {
@@ -46,9 +51,19 @@ export default function TicketsPage() {
   if (filterStatus !== "all") filtered = filtered.filter(t => t.status && t.status.toLowerCase() === filterStatus.toLowerCase());
   if (filterPriority !== "all") filtered = filtered.filter(t => t.priority && t.priority.toLowerCase() === filterPriority.toLowerCase());
 
-  // Always sort by date (newest first)
+  // Always sort by selected option
   let sorted = [...filtered];
-  sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  if (sortBy === "date_desc") {
+    sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  } else if (sortBy === "date_asc") {
+    sorted.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  } else if (sortBy === "priority") {
+    const order = { critical: 1, high: 2, medium: 3, low: 4 };
+    sorted.sort((a, b) => (order[a.priority?.toLowerCase() || "low"] || 5) - (order[b.priority?.toLowerCase() || "low"] || 5));
+  } else if (sortBy === "status") {
+    const order = { open: 1, in_progress: 2, resolved: 3, closed: 4 };
+    sorted.sort((a, b) => (order[a.status?.toLowerCase() || "open"] || 5) - (order[b.status?.toLowerCase() || "open"] || 5));
+  }
 
   const handleLike = async (id: string) => {
     try {
@@ -67,6 +82,7 @@ export default function TicketsPage() {
       const res = await fetchWithAuth(`${backendUrl}/api/issues/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete ticket');
       setTickets(tickets => tickets.filter(t => t.id !== id));
+      await fetchTickets(); // Update overview stats after delete
     } catch (err) {
       alert('Failed to delete ticket');
     }
@@ -90,12 +106,37 @@ export default function TicketsPage() {
             </button>
           </div>
         </header>
-        <TicketOverview refreshTickets={fetchTickets} />
+        <TicketOverview tickets={tickets} setTickets={setTickets} refreshTickets={fetchTickets} />
         <section className="w-full max-w-6xl px-2 sm:px-4">
           <div className="bg-white rounded-2xl shadow-lg p-1 sm:p-6 dark:bg-[#161616] border border-gray-700 overflow-x-auto">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 gap-1">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-400">Your Tickets</h2>
               <div className="flex flex-col sm:flex-row gap-2 relative w-full sm:w-auto">
+                {/* Sort Button & Dropdown */}
+                <div className="relative w-full sm:w-auto">
+                  <button
+                    onClick={() => setShowSort(v => !v)}
+                    className={`flex items-center gap-1 border border-gray-200 rounded-full px-4 py-2 text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-blue-400 text-sm font-medium dark:text-gray-400 dark:border-gray-700 dark:hover:bg-[#232323] transition w-full sm:w-auto ${showSort ? 'ring-2 ring-blue-400 border-blue-400' : ''}`}
+                    aria-haspopup="true"
+                    aria-expanded={showSort}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 16h13M3 8h13M9 20l-4-4 4-4M9 4l-4 4 4 4" /></svg>
+                    <span>Sort</span>
+                  </button>
+                  {showSort && (
+                    <div className="absolute right-0 top-11 z-20 bg-white dark:bg-[#232323] border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-2 w-full max-w-xs sm:w-48 animate-fade-in">
+                      {sortOptions.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setSortBy(opt.value); setShowSort(false); }}
+                          className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-medium ${sortBy === opt.value ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100 dark:hover:bg-[#232323] text-gray-700 dark:text-gray-200'}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {/* Filter Button & Dropdown */}
                 <div className="relative w-full sm:w-auto">
                   <button
