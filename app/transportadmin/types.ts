@@ -1,11 +1,12 @@
 export interface BusSchedule {
-  date: string
-  day: string
-  departureTime: string
-  from: string
-  arrivalTime: string
-  to: string
-  status: 'scheduled' | 'departed' | 'waiting'
+  id: number;
+  date: string;
+  day: string;
+  departureTime: string;
+  from: string;
+  arrivalTime: string;
+  to: string;
+  status: 'SCHEDULED' | 'DEPARTED' | 'WAITING';
 }
 
 export interface BusScheduleTableProps {

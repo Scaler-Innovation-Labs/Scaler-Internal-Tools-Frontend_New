@@ -2,175 +2,286 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
+import { config } from "../lib/config";
+
 interface AuthContextType {
-  accessToken: string | null;
-  setAccessToken: (token: string | null) => void;
-  login: () => void;
-  logout: () => Promise<void>;
+  isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  userRoles: string[];
+  login: () => void;
+  logout: () => Promise<void>;
+
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Utility function to get cookie value
-const getCookieValue = (name: string): string => {
-  if (typeof document === 'undefined') return '';
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-  return '';
-};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshPromise, setRefreshPromise] = useState<Promise<boolean> | null>(null);
+  const [lastAuthCheck, setLastAuthCheck] = useState(0);
+  const [refreshDebounceTimeout, setRefreshDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const refreshSession = async () => {
+  // Refresh token
+  const refreshToken = async (): Promise<boolean> => {
+    if (isRefreshing) {
+      return refreshPromise!.then(() => true).catch(() => false);
+    }
+
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsRefreshing(true);
+      const newPromise = new Promise<boolean>(async (resolve, reject) => {
+        try {
+          const response = await fetch(`${config.api.backendUrl}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+            }
+          });
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const refreshToken = getCookieValue('refreshToken');
-      if (!refreshToken) {
-        setAccessToken(null);
-        setError('No refresh token found. Please log in again.');
-        return false;
-      }
-      let res;
-      try {
-        res = await fetch(`${backendUrl}/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`
+          // If refresh token is missing or invalid, response will be 401
+          if (response.status === 401) {
+            setIsAuthenticated(false);
+            setUserRoles([]);
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+              window.location.href = '/login';
+            }
+            resolve(false);
+            return;
           }
-        });
-      } catch (fetchErr) {
-        setAccessToken(null);
-        setError('Network error: Failed to reach authentication server.');
-        return false;
+
+          if (!response.ok) {
+            setIsAuthenticated(false);
+            setUserRoles([]);
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+              window.location.href = '/login';
+            }
+            resolve(false);
+            return;
+          }
+
+          // Update last auth check time
+          setLastAuthCheck(Date.now());
+          resolve(true);
+        } catch (error) {
+          setIsAuthenticated(false);
+          setUserRoles([]);
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+            window.location.href = '/login';
+          }
+          resolve(false);
+        }
+      });
+
+      setRefreshPromise(newPromise);
+      return await newPromise;
+    } finally {
+      setIsRefreshing(false);
+      setRefreshPromise(null);
+    }
+  };
+
+  // Check authentication status
+  const checkAuth = async () => {
+    // Skip auth check on login and callback pages
+    if (typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/auth/callback'))) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${config.api.backendUrl}/auth/verify`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (response.status === 401) {
+        const refreshSuccessful = await refreshToken();
+        if (!refreshSuccessful) {
+          setIsAuthenticated(false);
+          setUserRoles([]);
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+            window.location.href = '/login';
+          }
+          return;
+        }
+        
+        // Update last auth check time
+        setLastAuthCheck(Date.now());
+        setIsAuthenticated(true);
+        await fetchUserData();
+        return;
       }
 
-      if (res.ok) {
-        const data = await res.json();
-        setAccessToken(data.accessToken);
-        return true;
+      if (!response.ok) {
+        setIsAuthenticated(false);
+        setUserRoles([]);
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+          window.location.href = '/login';
+        }
+        return;
+      }
+
+      const data = await response.json();
+      setIsAuthenticated(data.authenticated === true);
+      setError(null);
+      
+      // Update last auth check time
+      setLastAuthCheck(Date.now());
+      
+      // Fetch user data if authenticated
+      if (data.authenticated === true) {
+        await fetchUserData();
       } else {
-        setAccessToken(null);
-        setError('Failed to refresh authentication. Please log in again.');
-        return false;
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+          window.location.href = '/login';
+        }
       }
     } catch (err) {
-      console.error('Token refresh failed:', err);
-      setAccessToken(null);
-      setError('Failed to refresh authentication');
-      return false;
+      setIsAuthenticated(false);
+      setUserRoles([]);
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+        window.location.href = '/login';
+      }
+
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Enhanced fetch method with automatic token handling
-  const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const makeRequest = async (token: string) => {
-      return fetch(url, {
-        ...options,
+
+  // Fetch user data including roles
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`${config.api.backendUrl}/user/whoAmI`, {
+        method: 'GET',
         credentials: 'include',
         headers: {
+          'Accept': 'application/json',
           'Content-Type': 'application/json',
-          ...options.headers,
-          'Authorization': `Bearer ${token}`
-        }
+        },
       });
-    };
 
-    // Try with current access token
-    if (accessToken) {
-      const response = await makeRequest(accessToken);
-      
-      // If unauthorized, try to refresh token
-      if (response.status === 401) {
-        console.log('Access token expired, attempting refresh...');
-        const refreshSuccess = await refreshSession();
-        
-        if (refreshSuccess && accessToken) {
-          // Retry with new token
-          return makeRequest(accessToken!);
-        } else {
-          // Refresh failed, redirect to login
-          window.location.href = '/login';
-          throw new Error('Authentication failed');
-        }
-      }
-      
-      return response;
-    } else {
-      // No access token, try refresh first
-      const refreshSuccess = await refreshSession();
-      if (refreshSuccess && accessToken) {
-        return makeRequest(accessToken!);
+      if (response.ok) {
+        const userData = await response.json();
+        setUserRoles(userData.userRoles || []);
       } else {
-        window.location.href = '/login';
-        throw new Error('No valid authentication');
+        setUserRoles([]);
       }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setUserRoles([]);
     }
   };
 
+  // Check if token needs refresh (older than 55 minutes)
+  const shouldRefreshToken = () => {
+    const tokenAge = Date.now() - lastAuthCheck;
+    return tokenAge > 55 * 60 * 1000; // 55 minutes
+  };
+
+  // Fetch with automatic token refresh
+  const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    // Skip auth check for auth-related endpoints
+    if (url.includes('/auth/') || url.includes('/login')) {
+      return fetch(url, {
+        ...options,
+        credentials: 'include',
+      });
+    }
+
+    // Clear any pending refresh check
+    if (refreshDebounceTimeout) {
+      clearTimeout(refreshDebounceTimeout);
+      setRefreshDebounceTimeout(null);
+    }
+
+    try {
+      // Make the request
+      const response = await fetch(url, {
+        ...options,
+        credentials: 'include',
+      });
+
+      // Handle 401 response
+      if (response.status === 401) {
+        const refreshSuccessful = await refreshToken();
+        if (!refreshSuccessful) {
+          setIsAuthenticated(false);
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
+            window.location.href = '/login';
+          }
+          throw new Error('Authentication failed');
+        }
+
+        // Retry the original request once
+        return fetch(url, {
+          ...options,
+          credentials: 'include',
+        });
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error in fetchWithAuth:', error);
+      throw error;
+    }
+  };
+
+  // Initialize auth state
   useEffect(() => {
-    // Delay the refresh to prevent hydration mismatch
-    const timer = setTimeout(() => {
-      refreshSession();
-    }, 100);
-
-    // Set up interval to refresh access token every 14 minutes (before 15 min expiry)
-    const refreshInterval = setInterval(() => {
-      refreshSession();
-    }, 14 * 60 * 1000); // 14 minutes
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(refreshInterval);
-    };
+    // Skip initial auth check on login and callback pages
+    if (typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/auth/callback'))) {
+      setIsLoading(false);
+      return;
+    }
+    checkAuth();
   }, []);
 
   const login = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-    window.location.href = `${backendUrl}/login/oauth2/google`;
+    window.location.href = `${config.api.backendUrl}/oauth2/authorization/google`;
+
   };
 
   const logout = async () => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const refreshToken = getCookieValue('refreshToken');
-      await fetch(`${backendUrl}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`
-        }
+
+      await fetch(`${config.api.backendUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+
       });
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
-      setAccessToken(null);
-      window.location.href = "/login";
+
+      setIsAuthenticated(false);
+      setUserRoles([]);
+      window.location.href = '/login';
+
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
-      accessToken, 
-      setAccessToken, 
-      login, 
-      logout, 
-      isLoading, 
+
+      isAuthenticated,
+      isLoading,
       error,
+      userRoles,
+      login,
+      logout,
+
       fetchWithAuth
     }}>
       {children}
@@ -178,12 +289,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => ({
-  accessToken: "dev-token",
-  setAccessToken: () => {},
-  login: () => {},
-  logout: async () => {},
-  isLoading: false,
-  error: null,
-  fetchWithAuth: (url: string, options?: RequestInit) => fetch(url, options),
-});
+export const useAuth = () => {
+
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+
+};
