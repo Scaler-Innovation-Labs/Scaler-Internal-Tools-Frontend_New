@@ -8,84 +8,19 @@ import { VendorsTable } from "./components/vendors-table"
 import { PlansTable } from "./components/plans-table"
 import { VendorFormModal } from "./components/vendor-form-modal"
 import { PlanFormModal } from "./components/plan-form-modal"
+import { StudentsTable, AssignPlanPopup } from "./components"
 import { createMessAdminApi } from "./lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import type { MessStats, VendorWithStats, PlanWithDetails, CreateVendorForm, CreatePlanForm } from "./types"
 
-// Mock data for demonstration
-const mockStats: MessStats = {
-  totalVendors: 12,
-  totalActivePlans: 28,
-  totalStudentsEnrolled: 450,
-  monthlyRevenue: 125000,
-  averageRating: 4.2
+// Initial empty states - data will be loaded from API
+const initialStats: MessStats = {
+  totalVendors: 0,
+  totalActivePlans: 0,
+  totalStudentsEnrolled: 0,
+  monthlyRevenue: 0,
+  averageRating: 0
 }
-
-const mockVendors: VendorWithStats[] = [
-  {
-    vendorId: 1,
-    vendorName: "Delicious Delights",
-    totalPlans: 3,
-    totalStudents: 120,
-    monthlyRevenue: 35000,
-    status: 'active',
-    lastUpdated: '2024-12-28T10:30:00Z'
-  },
-  {
-    vendorId: 2,
-    vendorName: "Healthy Bites",
-    totalPlans: 2,
-    totalStudents: 85,
-    monthlyRevenue: 22000,
-    status: 'active',
-    lastUpdated: '2024-12-27T15:45:00Z'
-  },
-  {
-    vendorId: 3,
-    vendorName: "Spice Garden",
-    totalPlans: 4,
-    totalStudents: 200,
-    monthlyRevenue: 55000,
-    status: 'inactive',
-    lastUpdated: '2024-12-26T09:15:00Z'
-  }
-]
-
-const mockPlans: PlanWithDetails[] = [
-  {
-    vendorPlanId: 1,
-    planName: "Basic Meal Plan",
-    vendorName: "Delicious Delights",
-    fee: 3500,
-    mealTypes: ['Breakfast', 'Lunch', 'Dinner'],
-    enrolledStudents: 85,
-    status: 'active',
-    createdAt: '2024-11-15T10:00:00Z',
-    lastUpdated: '2024-12-20T14:30:00Z'
-  },
-  {
-    vendorPlanId: 2,
-    planName: "Premium Meal Plan",
-    vendorName: "Delicious Delights",
-    fee: 4500,
-    mealTypes: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'],
-    enrolledStudents: 35,
-    status: 'active',
-    createdAt: '2024-11-10T09:00:00Z',
-    lastUpdated: '2024-12-18T11:15:00Z'
-  },
-  {
-    vendorPlanId: 3,
-    planName: "Healthy Choice",
-    vendorName: "Healthy Bites",
-    fee: 4000,
-    mealTypes: ['Breakfast', 'Lunch', 'Dinner'],
-    enrolledStudents: 85,
-    status: 'active',
-    createdAt: '2024-11-20T08:30:00Z',
-    lastUpdated: '2024-12-22T16:45:00Z'
-  }
-]
 
 // Skeleton components
 const TableSkeleton = () => (
@@ -103,14 +38,16 @@ const TableSkeleton = () => (
 
 export default function MessAdminPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'vendors' | 'plans' | 'students'>('overview')
-  const [stats, setStats] = useState<MessStats>(mockStats)
-  const [vendors, setVendors] = useState<VendorWithStats[]>(mockVendors)
-  const [plans, setPlans] = useState<PlanWithDetails[]>(mockPlans)
+  const [stats, setStats] = useState<MessStats>(initialStats)
+  const [vendors, setVendors] = useState<VendorWithStats[]>([])
+  const [plans, setPlans] = useState<PlanWithDetails[]>([])
+  const [students, setStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   
   // Modal states
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false)
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
+  const [isAssignPlanModalOpen, setIsAssignPlanModalOpen] = useState(false)
   const [editingVendor, setEditingVendor] = useState<VendorWithStats | undefined>()
   const [editingPlan, setEditingPlan] = useState<PlanWithDetails | undefined>()
 
@@ -125,12 +62,21 @@ export default function MessAdminPage() {
     const loadData = async () => {
       setLoading(true)
       try {
-        // In a real app, you would fetch from API
-        // const statsData = await messAdminApi.dashboard.getStats()
-        // setStats(statsData)
+        // Load stats
+        const statsData = await messAdminApi.dashboard.getStats()
+        setStats(statsData)
         
-        // For now, using mock data
-        await new Promise(resolve => setTimeout(resolve, 500)) // Simulate API call
+        // Load vendors
+        const vendorsData = await messAdminApi.vendors.fetchAll()
+        setVendors(vendorsData)
+        
+        // Load plans
+        const plansData = await messAdminApi.plans.fetchAll()
+        setPlans(plansData)
+        
+        // Load student history
+        const studentsData = await messAdminApi.selections.fetchAll()
+        setStudents(studentsData)
       } catch (error) {
         console.error('Failed to load data:', error)
       } finally {
@@ -218,6 +164,30 @@ export default function MessAdminPage() {
       setPlans(prev => [...prev, newPlan])
     }
     setEditingPlan(undefined)
+  }
+
+  // Student handlers
+  const handleEditStudent = (student: any) => {
+    console.log('Edit student:', student)
+    // Implement student editing
+  }
+
+  const handleDeleteStudent = (studentId: string) => {
+    if (window.confirm('Are you sure you want to remove this student enrollment?')) {
+      console.log('Delete student:', studentId)
+      setStudents(prev => prev.filter(s => s.studentId !== studentId))
+    }
+  }
+
+  const handleAssignPlan = (assignment: {
+    studentId: string;
+    plans: string[];
+    month: string;
+    year: string;
+  }) => {
+    console.log('Assign plan:', assignment)
+    // Implement plan assignment
+    // In a real app, you would make an API call here
   }
 
   const tabs = [
@@ -408,19 +378,18 @@ export default function MessAdminPage() {
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    Student Enrollments
+                    Student History
                   </h2>
-                  <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
-                    Export Data
-                  </button>
                 </div>
                 {loading ? (
                   <TableSkeleton />
                 ) : (
-                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <UserIcon size={48} className="mx-auto mb-4 opacity-50" />
-                    <p>Student enrollment management coming soon...</p>
-                  </div>
+                  <StudentsTable
+                    students={students}
+                    onEdit={handleEditStudent}
+                    onDelete={handleDeleteStudent}
+                    onAssignPlan={() => setIsAssignPlanModalOpen(true)}
+                  />
                 )}
               </div>
             )}
@@ -450,6 +419,13 @@ export default function MessAdminPage() {
           vendors={vendors}
           plan={editingPlan}
           isEditing={!!editingPlan}
+        />
+
+        <AssignPlanPopup
+          isOpen={isAssignPlanModalOpen}
+          onClose={() => setIsAssignPlanModalOpen(false)}
+          onAssign={handleAssignPlan}
+          plans={[]}
         />
       </div>
     </DashboardLayout>

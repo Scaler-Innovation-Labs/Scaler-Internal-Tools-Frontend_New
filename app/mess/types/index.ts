@@ -1,5 +1,6 @@
 // Mess Feature Types
 
+// Vendor Types
 export interface Vendor {
   vendorId: number;
   vendorName: string;
@@ -28,19 +29,19 @@ export interface VendorPlan {
   planName: string;
   vendorId: number;
   fee: number;
-  mealTypes: Set<string>;
+  mealTypes: string[];
 }
 
 export interface VendorPlanCreateDto {
   planName: string;
   vendorId: number;
   fee: number;
-  mealTypes: Set<string>;
+  mealTypes: string[];
 }
 
 export interface VendorPlanUpdateDto {
-  planName: string;
-  fee: number;
+  planName?: string;
+  fee?: number;
 }
 
 export interface VendorPlanResponseDto {
@@ -48,14 +49,14 @@ export interface VendorPlanResponseDto {
   planName: string;
   vendorId: number;
   fee: number;
-  mealTypes: Set<string>;
+  mealTypes: string[];
 }
 
 export interface VendorPlanSummaryDto {
   planName: string;
   vendorName: string;
   fee: number;
-  mealTypes: Set<string>;
+  mealTypes: string[];
 }
 
 // Vendor Plan Selection Types
@@ -64,16 +65,23 @@ export interface VendorPlanSelection {
   userId: number;
   vendorPlanId: number;
   selectedMonth: string; // LocalDate as ISO string
+  roomNumber: number;
+  hostel: string;
 }
 
 export interface VendorPlanSelectionCreateDto {
   vendorPlanId: number;
   userId: number;
   selectedMonth: string; // LocalDate as ISO string
+  roomNumber: number;
+  hostel: string;
 }
 
 export interface VendorPlanSelectionUpdateDto {
-  planId: number;
+  vendorPlanId?: number;
+  selectedMonth?: string;
+  roomNumber?: number;
+  hostel?: string;
 }
 
 export interface VendorPlanSelectionResponseDto {
@@ -81,14 +89,97 @@ export interface VendorPlanSelectionResponseDto {
   userId: number;
   vendorPlanId: number;
   selectedMonth: string;
+  roomNumber: number;
+  hostel: string;
 }
 
 export interface VendorPlanSelectionSummaryDto {
   vendorPlanName: string;
   vendorName: string;
   selectedMonth: string;
-  mealTypes: Set<string>;
+  mealTypes: string[];
   fee: number;
+  roomNumber: number;
+  hostel: string;
+}
+
+// Vendor Plan History Types (for admin)
+export interface VendorPlanHistorySummaryDto {
+  planName: string;
+  vendorName: string;
+  fee: number;
+  mealTypes: string[];
+}
+
+export interface VendorPlanSelectionHistoryDto {
+  userId: number;
+  vendorPlanHistorySummaryDto: VendorPlanHistorySummaryDto;
+  selectedMonth: string;
+  roomNumber: number;
+  hostel: string;
+}
+
+// Feedback and Review Types
+export interface FeedbackCreateDto {
+  vendorPlanId: number;
+  userId: number;
+  feedback: string;
+}
+
+export interface FeedbackResponseDto {
+  vendorPlanId: number;
+  userId: number;
+  feedback: string;
+  timestamp: string;
+}
+
+export interface ReviewCreateDto {
+  vendorPlanId: number;
+  userId: number;
+  review: string;
+  rating: number;
+}
+
+export interface ReviewResponseDto {
+  vendorPlanId: number;
+  userId: number;
+  review: string;
+  rating: number;
+  timestamp: string;
+}
+
+// Enums
+export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER';
+export type HostelType = 'Uniworld_1' | 'Uniworld_2';
+
+// Page Types for API responses
+export interface Page<T> {
+  content: T[];
+  pageable: {
+    sort: {
+      sorted: boolean;
+      unsorted: boolean;
+      empty: boolean;
+    };
+    pageNumber: number;
+    pageSize: number;
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+  numberOfElements: number;
+  size: number;
+  number: number;
+  sort: {
+    sorted: boolean;
+    unsorted: boolean;
+    empty: boolean;
+  };
+  empty: boolean;
 }
 
 // Cart Types for UI
@@ -97,7 +188,7 @@ export interface CartItem {
   planName: string;
   fee: number;
   vendorPlanId: number;
-  mealTypes: Set<string>;
+  mealTypes: string[];
 }
 
 export interface CartState {
@@ -114,6 +205,7 @@ export interface DietPreference {
 export interface CheckoutDetails {
   dietPreference: DietPreference[];
   roomNumber: string;
+  sstMail: string;
 }
 
 // Quick Stats Types
