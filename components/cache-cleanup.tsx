@@ -2,7 +2,9 @@
 
 import { useEffect } from 'react'
 
+
 export function CacheCleanup({ children }: { children: React.ReactNode }) {
+
   useEffect(() => {
     // Clear localStorage
     localStorage.clear()
@@ -19,6 +21,8 @@ export function CacheCleanup({ children }: { children: React.ReactNode }) {
       })
     }
     
+
+
     // Force a hard reload if needed
     if (window.performance && window.performance.getEntriesByType) {
       const nav = window.performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
@@ -28,5 +32,7 @@ export function CacheCleanup({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+
   return <>{children}</>
+
 } 

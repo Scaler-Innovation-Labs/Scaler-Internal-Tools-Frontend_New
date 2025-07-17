@@ -52,6 +52,7 @@ const formatTo12Hour = (time: string) => {
 // Memoize the empty state component
 const EmptyState = memo(function EmptyState() {
   return (
+
     <div className="text-center py-12 bg-white dark:bg-black rounded-xl border border-gray-100 dark:border-gray-700">
       <div className="text-gray-500 dark:text-gray-400 text-lg">
         No bus schedules available
@@ -108,6 +109,7 @@ const ScheduleRow = memo(function ScheduleRow({ schedule, index, onEdit, onDelet
           <button 
             onClick={() => onEdit(schedule)}
             className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+
           >
             <span className="text-[#1A85FF] dark:text-blue-400">
               <EditIcon />
@@ -278,8 +280,10 @@ export const BusScheduleTable = memo(function BusScheduleTable({
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full">
           <thead>
+
             <tr className="bg-[#F5F5F5] dark:bg-black rounded-xl">
               <th className="first:rounded-l-xl w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">
+
                 Date
               </th>
               <th className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400">

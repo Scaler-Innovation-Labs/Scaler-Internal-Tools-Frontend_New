@@ -3,8 +3,10 @@ import { Open_Sans } from "next/font/google"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CacheCleanup } from "@/components/cache-cleanup"
+
 import AdminRoute from "@/components/admin-route"
 import ClientLayout from "./client-layout"
+
 import "./globals.css"
 import { ModalProvider } from "@/contexts/modal-context"
 

@@ -159,6 +159,7 @@ const nextConfig = {
           },
         ],
       },
+
     ]
 
     // Add caching headers only in production
@@ -228,7 +229,59 @@ const nextConfig = {
         source: '/transport/schedule/:path*',
         destination: 'http://localhost:8000/transport/schedule/:path*',
       }
+
     ]
+
+    // Add caching headers only in production
+    if (process.env.NODE_ENV === 'production') {
+      headers.push(
+        {
+          source: '/static/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/_next/static/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/fonts/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        }
+      )
+    } else {
+      // Development-specific headers to prevent caching
+      headers[0].headers.push(
+        {
+          key: 'Cache-Control',
+          value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+        {
+          key: 'Pragma',
+          value: 'no-cache',
+        },
+        {
+          key: 'Expires',
+          value: '0',
+        }
+      )
+    }
+
+    return headers
   },
 }
 

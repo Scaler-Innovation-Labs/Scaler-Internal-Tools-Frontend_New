@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuthRedirect } from "../hooks/use-auth-redirect";
@@ -22,4 +23,5 @@ export default function Home() {
   }
 
   return null; // The redirect will happen before this is rendered
+
 }

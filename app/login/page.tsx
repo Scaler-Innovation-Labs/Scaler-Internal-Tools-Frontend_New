@@ -1,6 +1,7 @@
 "use client";
 import ClientLayout from "../client-layout";
 import LoginPage from "../auth/login";
+
 import { useAuthRedirect } from "../../hooks/use-auth-redirect";
 
 export default function LoginRoute() {
@@ -33,4 +34,5 @@ export default function LoginRoute() {
 
   // This should never be shown since we redirect when authenticated
   return null;
+
 }

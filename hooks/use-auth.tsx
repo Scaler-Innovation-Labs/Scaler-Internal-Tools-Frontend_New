@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
+
 import { config } from "../lib/config";
 
 interface AuthContextType {
@@ -10,10 +11,12 @@ interface AuthContextType {
   userRoles: string[];
   login: () => void;
   logout: () => Promise<void>;
+
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -150,10 +153,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth/callback')) {
         window.location.href = '/login';
       }
+
     } finally {
       setIsLoading(false);
     }
   };
+
 
   // Fetch user data including roles
   const fetchUserData = async () => {
@@ -245,31 +250,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = () => {
     window.location.href = `${config.api.backendUrl}/oauth2/authorization/google`;
+
   };
 
   const logout = async () => {
     try {
+
       await fetch(`${config.api.backendUrl}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
+
       });
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
+
       setIsAuthenticated(false);
       setUserRoles([]);
       window.location.href = '/login';
+
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
+
       isAuthenticated,
       isLoading,
       error,
       userRoles,
       login,
       logout,
+
       fetchWithAuth
     }}>
       {children}
@@ -278,9 +290,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = () => {
+
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+
 };

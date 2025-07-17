@@ -16,4 +16,5 @@ const AuthCallback = dynamic(() => import('../callback'), {
 
 export default function CallbackPage() {
   return <AuthCallback />;
+
 }

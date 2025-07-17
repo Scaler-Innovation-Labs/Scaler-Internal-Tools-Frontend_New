@@ -13,6 +13,7 @@ export default function LoginPage() {
   }, [searchParams]);
 
   return (
+
     <div className="min-h-screen w-full flex items-center justify-center bg-[#f4f5f7]">
       <div className="flex flex-col md:flex-row w-full max-w-[1400px] min-h-[90vh] rounded-3xl shadow-2xl overflow-hidden bg-white border border-gray-200 mx-4 my-8 relative">
         {/* Left Side */}
@@ -118,6 +119,7 @@ export default function LoginPage() {
                   Support
                 </a>
               </div>
+
             </div>
           </div>
         </div>
@@ -125,3 +127,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

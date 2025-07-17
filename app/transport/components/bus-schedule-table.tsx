@@ -189,7 +189,9 @@ export const BusScheduleTable = memo(function BusScheduleTable({ schedules = [],
       {/* Mobile Cards View */}
       <div className="block md:hidden space-y-4" role="region" aria-label="Bus schedule mobile view">
         {schedules.map((schedule, index) => (
+
           <MobileScheduleCard key={`mobile-${index}`} schedule={schedule} />
+
         ))}
       </div>
 
@@ -197,8 +199,10 @@ export const BusScheduleTable = memo(function BusScheduleTable({ schedules = [],
       <div className="hidden md:block overflow-x-auto" role="region" aria-label="bus schedule table">
         <table className="w-full" role="table">
           <thead>
+
             <tr className="bg-[#F5F5F5] dark:bg-black rounded-xl">
               <th className="first:rounded-l-xl w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">
+
                 Date
               </th>
               <th className="w-[15%] px-3 sm:px-4 py-3 sm:py-4 !font-[var(--font-poppins)] !font-medium !text-[13px] !leading-[100%] !tracking-[-1%] !text-center !align-middle uppercase text-[#666666] dark:text-gray-400" scope="col">

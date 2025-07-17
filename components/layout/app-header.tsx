@@ -3,7 +3,9 @@ import { memo, useEffect, useState } from "react"
 import { BellIcon, MoonIcon, SunIcon } from "@/components/ui/icons"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
+
 import { useUser } from "@/hooks/use-user"
+
 
 interface AppHeaderProps {
   onMenuClick: () => void
@@ -16,12 +18,14 @@ export const AppHeader = memo(function AppHeader({
 }: AppHeaderProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+
   const { userData, isLoading, fetchUserData } = useUser()
 
   useEffect(() => {
     setMounted(true)
     fetchUserData()
   }, [fetchUserData])
+
 
   if (!mounted) {
     return (
@@ -65,6 +69,7 @@ export const AppHeader = memo(function AppHeader({
       </button>
       {/* Profile */}
       <div className={cn(
+
         "flex flex-col items-end gap-1 rounded-full shadow px-3 py-1.5",
         "bg-white/80 dark:bg-gray-800/80"
       )}>
@@ -86,6 +91,7 @@ export const AppHeader = memo(function AppHeader({
             ))}
           </div>
         )}
+
       </div>
     </div>
   )

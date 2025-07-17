@@ -4,8 +4,10 @@ import { memo, useState, Suspense, lazy, startTransition } from "react"
 import { CloseIcon } from "@/components/ui/icons"
 import type { DashboardLayoutProps } from "@/types"
 import { AppSidebar } from "./app-sidebar"
+
 import { useModal } from "@/contexts/modal-context"
 import { cn } from "@/lib/utils"
+
 
 const AppHeader = lazy(() => 
   import("./app-header").then(module => ({ 
@@ -38,10 +40,12 @@ SidebarSkeleton.displayName = 'SidebarSkeleton'
 HeaderSkeleton.displayName = 'HeaderSkeleton'
 
 export const DashboardLayout = memo(function DashboardLayout({ 
+
   children 
 }: Omit<DashboardLayoutProps, 'activeItem'>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const { isAnyModalOpen } = useModal()
+
   
   const handleSidebarToggle = () => {
     startTransition(() => {
@@ -56,6 +60,7 @@ export const DashboardLayout = memo(function DashboardLayout({
   }
 
   return (
+
     <div className="flex h-screen relative">
       {/* Mobile overlay */}
       {isSidebarOpen && (
@@ -74,6 +79,7 @@ export const DashboardLayout = memo(function DashboardLayout({
             "rounded-tr-3xl rounded-br-3xl overflow-hidden",
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
+
         >
           <div className="relative h-full bg-white dark:bg-black rounded-tr-3xl rounded-br-3xl">
             <Suspense fallback={<SidebarSkeleton />}>

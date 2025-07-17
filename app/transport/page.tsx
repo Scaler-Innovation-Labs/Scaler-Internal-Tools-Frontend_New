@@ -41,17 +41,21 @@ export default function TransportPage() {
     await fetchSchedulesByDate(selectedDate);
   }, [fetchSchedulesByDate, selectedDate]);
 
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
+
         <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto">
           <div className="h-auto min-h-[120px] sm:min-h-[140px] bg-[linear-gradient(90.57deg,#2E4CEE_9.91%,#221EBF_53.29%,#040F75_91.56%)] px-4 sm:px-8 lg:px-10 py-6 sm:py-7 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-md mb-8">
+
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">Transport Services</h2>
               <p className="text-sm sm:text-base lg:text-lg text-slate-100 font-normal">Access campus bus schedules and track real-time bus locations.</p>
             </div>
           </div>
         </div>
+
 
         <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto z-10 mb-12">
           <div className="bg-white dark:bg-black rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
@@ -101,6 +105,7 @@ export default function TransportPage() {
               <div className="mt-2 pb-8">
                 <ImportantNotes notes={IMPORTANT_NOTES} />
               </div>
+
             </div>
           </div>
         </div>

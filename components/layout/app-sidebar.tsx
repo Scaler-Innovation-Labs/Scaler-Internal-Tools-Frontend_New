@@ -14,7 +14,9 @@ import {
   LogOutIcon,
   LogoIcon,
 } from "@/components/ui/icons";
+
 import { cn, hasAdminRole } from "@/lib/utils";
+
 
 interface MenuItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
@@ -84,8 +86,10 @@ function NavLink({ href, isActive, onClick, children }: {
       href={href}
       onClick={onClick}
       className={cn(
+
         "flex flex-row items-center justify-start gap-1.5 w-full py-1 px-2 rounded-lg transition-all cursor-pointer",
         "font-opensans font-medium text-xs leading-[100%] tracking-[0%]",
+
         {
           "bg-blue-50 text-blue-700 dark:bg-gray-800 dark:text-blue-400": isActive,
           "text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-gray-800 dark:hover:text-blue-400": !isActive
@@ -106,6 +110,7 @@ export const AppSidebar = memo(function AppSidebar({
   const { userRoles, logout } = useAuth();
   const isAdmin = hasAdminRole(userRoles);
 
+
   // Group menu items
   const groupedMenuItems = menuItems.reduce((acc, item) => {
     if (!item.group) return acc;
@@ -120,12 +125,14 @@ export const AppSidebar = memo(function AppSidebar({
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-black w-[220px] py-2 px-2 rounded-tr-3xl rounded-br-3xl">
+
       {/* Logo */}
       <div className="flex items-center justify-center w-full mb-4">
         <LogoIcon size={120} className="shrink-0" />
       </div>
 
       {/* Main Menu */}
+
       <nav className="flex-1 flex flex-col w-full gap-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
         {/* Main Dashboard */}
         {groupedMenuItems.main?.map((item) => (
@@ -203,24 +210,29 @@ export const AppSidebar = memo(function AppSidebar({
                 </NavLink>
               ))}
             </div>
+
           );
         })}
       </nav>
 
+
       {/* Sign Out Button */}
       <div className="w-full px-1 mt-2">
+
         <button
           onClick={() => {
             logout();
             onClose();
           }}
           className={cn(
+
             "flex flex-row items-center justify-center gap-2 w-full py-1.5 px-2 rounded-lg transition-all cursor-pointer",
             "font-opensans font-medium text-xs leading-[100%] tracking-[0%]",
             "text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
           )}
         >
           <LogOutIcon size={14} className="shrink-0 text-red-600 dark:text-red-400" />
+
           <span>Sign Out</span>
         </button>
       </div>
