@@ -1,17 +1,22 @@
 "use client";
 import ClientLayout from "../client-layout";
 import LoginPage from "../auth/login";
-import { useAuthRedirect } from "../../hooks/use-auth-redirect";
+import { useAuth } from "../../hooks/use-auth";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginRoute() {
-  // For login page, only redirect if authenticated
-  const { isChecking, isAuthenticated } = useAuthRedirect({
-    whenAuthenticated: '/dashboard',
-    whenNotAuthenticated: undefined // Stay on login page if not authenticated
-  });
+  const { isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   // Show loading spinner while checking auth status
-  if (isChecking) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

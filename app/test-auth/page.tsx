@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/use-auth";
 import ClientLayout from "../client-layout";
 
 function TestAuthContent() {
-  const { accessToken, isLoading, error, login, logout } = useAuth();
+  const { isAuthenticated, isLoading, error, login, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ function TestAuthContent() {
             <h2 className="text-lg font-semibold mb-2">Status</h2>
             <p><strong>Loading:</strong> {isLoading ? '⏳ Yes' : '✅ No'}</p>
             <p><strong>Error:</strong> {error ? `❌ ${error}` : '✅ None'}</p>
-            <p><strong>Access Token:</strong> {accessToken ? '✅ Present' : '❌ Missing'}</p>
+            <p><strong>Authenticated:</strong> {isAuthenticated ? '✅ Yes' : '❌ No'}</p>
           </div>
 
           {error && (
@@ -35,13 +35,13 @@ function TestAuthContent() {
             </div>
           )}
 
-          {accessToken ? (
+          {isAuthenticated ? (
             <div className="space-y-4">
               <div className="p-4 bg-green-100 rounded-lg">
                 <h3 className="font-semibold text-green-800">✅ Authentication Successful!</h3>
                 <p className="text-green-700">You are logged in and have a valid access token.</p>
                 <div className="mt-2 p-2 bg-gray-100 rounded text-xs break-all">
-                  <strong>Token Preview:</strong> {accessToken.substring(0, 50)}...
+                  <strong>Authentication Status:</strong> Authenticated
                 </div>
               </div>
               
