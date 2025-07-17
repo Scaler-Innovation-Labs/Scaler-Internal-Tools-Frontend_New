@@ -114,7 +114,7 @@ export const AppSidebar = memo(function AppSidebar({
     // Only filter admin-only items for non-admin users
     if (item.adminOnly && !isAdmin) return acc;
     
-    acc[item.group].push(item);
+    acc[item.group]!.push(item);
     return acc;
   }, {} as Record<string, MenuItem[]>);
 
