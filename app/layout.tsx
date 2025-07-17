@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Open_Sans } from "next/font/google"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
+
 import { CacheCleanup } from "@/components/cache-cleanup"
 
 import AdminRoute from "@/components/admin-route"
@@ -90,6 +91,7 @@ export default function RootLayout({
       </head>
       <body className={`${openSans.className} antialiased min-h-screen bg-light-blue dark:bg-[#161616]`}>
         <ErrorBoundary>
+
           <ThemeProvider>
             <ModalProvider>
               <ClientLayout>
@@ -97,6 +99,7 @@ export default function RootLayout({
               </ClientLayout>
             </ModalProvider>
           </ThemeProvider>
+          </NotificationProvider>
         </ErrorBoundary>
         <CacheCleanup />
       </body>
