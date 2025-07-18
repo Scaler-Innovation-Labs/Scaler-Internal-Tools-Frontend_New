@@ -179,10 +179,10 @@ export function EditSchedulePopup({ isOpen, onClose, onSubmit, schedule }: EditS
       // Update form data with new departure time
       const newFormData = { ...formData, [field]: value };
       
-      // Calculate arrival time (5 minutes before departure)
+      // Calculate arrival time (20 minutes after departure)
       const time = `${newFormData.departureHour}:${newFormData.departureMinute} ${newFormData.departureAmPm}`;
       const parsedTime = parse(time, 'h:mm aa', new Date());
-      const arrivalTime = subMinutes(parsedTime, 5);
+      const arrivalTime = new Date(parsedTime.getTime() + 20 * 60000);
       
       // Update form data with new arrival time
       setFormData({

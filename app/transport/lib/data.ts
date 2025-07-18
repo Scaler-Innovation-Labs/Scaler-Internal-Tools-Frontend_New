@@ -6,7 +6,7 @@ export const busScheduleData: BusSchedule[] = [
     day: "Wednesday",
     departureTime: "08:00 AM",
     from: "Main Campus",
-    arrivalTime: "08:30 AM",
+    arrivalTime: "08:20 AM",
     to: "Engineering Block",
     status: "scheduled"
   },
@@ -15,7 +15,7 @@ export const busScheduleData: BusSchedule[] = [
     day: "Wednesday",
     departureTime: "09:15 AM",
     from: "Engineering Block",
-    arrivalTime: "09:45 AM",
+    arrivalTime: "09:35 AM",
     to: "Science Block",
     status: "departed"
   },
@@ -24,7 +24,7 @@ export const busScheduleData: BusSchedule[] = [
     day: "Wednesday",
     departureTime: "10:30 AM",
     from: "Science Block",
-    arrivalTime: "11:00 AM",
+    arrivalTime: "10:50 AM",
     to: "Main Campus",
     status: "waiting"
   },
@@ -33,7 +33,7 @@ export const busScheduleData: BusSchedule[] = [
     day: "Wednesday",
     departureTime: "11:45 AM",
     from: "Main Campus",
-    arrivalTime: "12:15 PM",
+    arrivalTime: "12:05 PM",
     to: "Engineering Block",
     status: "scheduled"
   },
@@ -42,7 +42,7 @@ export const busScheduleData: BusSchedule[] = [
     day: "Wednesday",
     departureTime: "01:00 PM",
     from: "Engineering Block",
-    arrivalTime: "01:30 PM",
+    arrivalTime: "01:20 PM",
     to: "Science Block",
     status: "scheduled"
   }

@@ -25,7 +25,7 @@ interface ScheduleBusPopupProps {
   selectedDate?: Date
 }
 
-// Helper function to calculate arrival time (5 minutes before departure)
+// Helper function to calculate arrival time (20 minutes after departure)
 const calculateArrivalTime = (hour: string, minute: string, ampm: string) => {
   // Create a base date to work with
   const baseDate = new Date()
@@ -48,8 +48,8 @@ const calculateArrivalTime = (hour: string, minute: string, ampm: string) => {
     milliseconds: 0
   })
   
-  // Calculate arrival time (5 minutes before)
-  const arrivalTime = subMinutes(departureTime, 5)
+  // Calculate arrival time (20 minutes after)
+  const arrivalTime = new Date(departureTime.getTime() + 20 * 60000)
   
   // Format back to 12-hour format
   let arrivalHour = arrivalTime.getHours()
