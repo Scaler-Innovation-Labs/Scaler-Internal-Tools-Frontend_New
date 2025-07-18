@@ -1,9 +1,0 @@
-{
-  "files.associations": {
-    "*.css": "postcss"
-  },
-  "css.validate": false,
-  "editor.quickSuggestions": {
-    "strings": true
-  }
-} 

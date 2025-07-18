@@ -1,28 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*', // Proxy to backend
-      },
-    ];
-  },
   // Modern Next.js 15 experimental features
   experimental: {
     // Latest performance optimizations
     optimizePackageImports: ['lucide-react', '@radix-ui/react-avatar'],
     webVitalsAttribution: ['CLS', 'LCP', 'FID', 'INP', 'TTFB'],
-    
-    // Latest Next.js 15 features
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
     
     // Modern caching - adjusted for development
     staleTimes: process.env.NODE_ENV === 'production' ? {
@@ -31,6 +13,16 @@ const nextConfig = {
     } : {
       dynamic: 0,
       static: 0,
+    },
+  },
+
+  // Turbopack configuration (moved from experimental.turbo)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
     },
   },
 
@@ -237,59 +229,7 @@ const nextConfig = {
         source: '/transport/schedule/:path*',
         destination: 'http://localhost:8000/transport/schedule/:path*',
       }
-
     ]
-
-    // Add caching headers only in production
-    if (process.env.NODE_ENV === 'production') {
-      headers.push(
-        {
-          source: '/static/(.*)',
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=31536000, immutable',
-            },
-          ],
-        },
-        {
-          source: '/_next/static/(.*)',
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=31536000, immutable',
-            },
-          ],
-        },
-        {
-          source: '/fonts/(.*)',
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=31536000, immutable',
-            },
-          ],
-        }
-      )
-    } else {
-      // Development-specific headers to prevent caching
-      headers[0].headers.push(
-        {
-          key: 'Cache-Control',
-          value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        },
-        {
-          key: 'Pragma',
-          value: 'no-cache',
-        },
-        {
-          key: 'Expires',
-          value: '0',
-        }
-      )
-    }
-
-    return headers
   },
 }
 
