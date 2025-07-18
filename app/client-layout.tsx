@@ -1,6 +1,10 @@
 "use client";
 import { AuthProvider } from "../hooks/use-auth";
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+interface ClientLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function ClientLayout({ children }: ClientLayoutProps) {
   return <AuthProvider>{children}</AuthProvider>;
 }
