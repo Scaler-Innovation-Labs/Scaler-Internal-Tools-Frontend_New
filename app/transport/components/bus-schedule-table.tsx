@@ -26,7 +26,7 @@ const formatTo12Hour = (time: string) => {
   }
   
   // Convert from 24h format
-  const [hours, minutes] = time.split(':')
+  const [hours = '0', minutes = '00'] = time.split(':')
   let hour = parseInt(hours, 10)
   const period = hour >= 12 ? 'PM' : 'AM'
   hour = hour % 12

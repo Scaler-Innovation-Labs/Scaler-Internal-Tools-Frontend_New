@@ -153,10 +153,15 @@ export function EditSchedulePopup({ isOpen, onClose, onSubmit, schedule }: EditS
   };
 
   const getAvailableDestinations = (source: string) => {
-    if (source === "Macro Campus") {
-      return campusOptions.filter(campus => campus !== "Macro Campus");
-    } else {
-      return ["Macro Campus"];
+    switch (source) {
+      case "Macro Campus":
+        return campusOptions.filter(campus => campus !== "Macro Campus");
+      case "Micro Campus 1":
+        return ["Micro Campus 2", "Macro Campus"];
+      case "Micro Campus 2":
+        return ["Micro Campus 1", "Macro Campus"];
+      default:
+        return [];
     }
   };
 
