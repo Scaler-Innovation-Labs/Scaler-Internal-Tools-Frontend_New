@@ -6,7 +6,7 @@ import { format, addDays, subDays } from "date-fns";
 import { BusScheduleTable } from "./components/bus-schedule-table";
 import { ScheduleBusPopup } from "./components/schedule-bus-popup";
 import { ImportantNotes } from "./components/important-notes";
-import { useTransport } from "@/hooks/use-bus-schedules";
+import { useTransportAdmin } from "./hooks/use-transport-admin";
 import type { BusScheduleCreateDto, BusScheduleUpdateDto } from "@/lib/transport-api";
 import type { BusSchedule } from "./types";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ export default function TransportAdminPage() {
   const [toDate, setToDate] = useState(new Date());
   const fromDateInputRef = useRef<HTMLInputElement>(null);
   const toDateInputRef = useRef<HTMLInputElement>(null);
-  const { schedules, loading, error, fetchSchedulesByDateRange, createSchedule, updateSchedule, deleteSchedule } = useTransport({ isAdmin: true });
+  const { schedules, loading, error, fetchSchedulesByDateRange, createSchedule, updateSchedule, deleteSchedule } = useTransportAdmin({ isAdmin: true });
 
   // Transform schedules to match the expected format
   const transformedSchedules: BusSchedule[] = schedules.map(s => ({

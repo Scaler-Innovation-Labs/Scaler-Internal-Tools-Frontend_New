@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { format, addDays } from "date-fns";
-import { useTransport } from "@/hooks/use-transport";
+import { useTransport } from "./hooks/use-transport";
 import { BusScheduleTable } from "./components/bus-schedule-table";
 import { ImportantNotes } from "./components/important-notes";
 import type { BusSchedule } from "./types";

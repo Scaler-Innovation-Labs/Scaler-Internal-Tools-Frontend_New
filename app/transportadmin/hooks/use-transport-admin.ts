@@ -1,13 +1,9 @@
 import { useState, useCallback, useRef } from 'react'
 import { useTransportApi } from '@/lib/transport-api'
 import type { BusScheduleResponseDto, BusScheduleSummaryDto, BusScheduleCreateDto, BusScheduleUpdateDto } from '@/lib/transport-api'
-import { format } from 'date-fns'
+import { format, eachDayOfInterval } from 'date-fns'
 
-interface UseTransportProps {
-  isAdmin?: boolean
-}
-
-export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
+export function useTransportAdmin() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [schedules, setSchedules] = useState<(BusScheduleResponseDto | BusScheduleSummaryDto)[]>([])
@@ -17,14 +13,14 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
   const lastFetchedDateRef = useRef<string>('')
   const MIN_FETCH_INTERVAL = 1000 // Reduce to 1 second
 
-  const fetchSchedulesByDate = useCallback(async (date: Date) => {
+  const fetchSchedulesByDateRange = useCallback(async (startDate: Date, endDate: Date) => {
     const now = Date.now()
-    const formattedDate = format(date, 'yyyy-MM-dd')
+    const formattedStartDate = format(startDate, 'yyyy-MM-dd')
     
     // Always fetch if the date is different from the last fetched date
     const shouldFetch = 
       !fetchInProgressRef.current && 
-      (formattedDate !== lastFetchedDateRef.current || 
+      (formattedStartDate !== lastFetchedDateRef.current || 
        (now - lastFetchTimeRef.current) >= MIN_FETCH_INTERVAL)
     
     if (!shouldFetch) {
@@ -34,21 +30,27 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
     try {
       fetchInProgressRef.current = true
       lastFetchTimeRef.current = now
-      lastFetchedDateRef.current = formattedDate
+      lastFetchedDateRef.current = formattedStartDate
       setLoading(true)
       setError(null)
       
-      const result = isAdmin 
-        ? await transportApi.getAdminSchedulesByDate(formattedDate)
-        : await transportApi.getUserSchedulesByDate(formattedDate)
+      // Get all dates in the range
+      const dates = eachDayOfInterval({ start: startDate, end: endDate })
       
-      // Ensure status is uppercase
-      const processedResult = Array.isArray(result) 
-        ? result.map(schedule => ({
-            ...schedule,
-            busStatus: schedule.busStatus?.toUpperCase() || 'SCHEDULED'
-          }))
-        : []
+      // Fetch schedules for each date
+      const allSchedules = await Promise.all(
+        dates.map(date => 
+          transportApi.getAdminSchedulesByDate(format(date, 'yyyy-MM-dd'))
+        )
+      )
+      
+      // Flatten and process the results
+      const processedResult = allSchedules
+        .flat()
+        .map(schedule => ({
+          ...schedule,
+          busStatus: schedule.busStatus?.toUpperCase() || 'SCHEDULED'
+        }))
       
       setSchedules(processedResult)
     } catch (err) {
@@ -61,7 +63,7 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
         fetchInProgressRef.current = false
       }, 50)
     }
-  }, [isAdmin, transportApi])
+  }, [transportApi])
 
   const createSchedule = useCallback(async (schedule: BusScheduleCreateDto) => {
     if (fetchInProgressRef.current) return null;
@@ -93,7 +95,6 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
       throw err;
     } finally {
       setLoading(false);
-      // Add a small delay before allowing the next fetch
       setTimeout(() => {
         fetchInProgressRef.current = false;
       }, 100);
@@ -151,7 +152,6 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
     }
   }, [transportApi]);
 
-  // Add a new function for refreshing schedules
   const refreshSchedules = useCallback(async (date: Date) => {
     if (fetchInProgressRef.current) return;
     
@@ -186,7 +186,7 @@ export function useTransport({ isAdmin = false }: UseTransportProps = {}) {
     schedules,
     loading,
     error,
-    fetchSchedulesByDate,
+    fetchSchedulesByDateRange,
     createSchedule,
     updateSchedule,
     deleteSchedule,
