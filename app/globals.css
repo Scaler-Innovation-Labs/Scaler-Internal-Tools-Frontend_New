@@ -251,7 +251,7 @@ a[role="button"] {
 /* Modern print optimizations */
 @media print {
   * {
-    color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
