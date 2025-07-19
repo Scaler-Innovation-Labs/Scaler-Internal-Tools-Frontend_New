@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 import { config } from "@/lib/configs";
+import { usePathname } from "next/navigation";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -27,6 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [refreshPromise, setRefreshPromise] = useState<Promise<boolean> | null>(null);
   const [lastAuthCheck, setLastAuthCheck] = useState(0);
   const [refreshDebounceTimeout, setRefreshDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const pathname = usePathname();
 
   // Refresh token
   const refreshToken = async (): Promise<boolean> => {
@@ -90,11 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Check authentication status
   const checkAuth = async () => {
-    // Skip auth check on login and callback pages
-    if (typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/auth/callback'))) {
-      setIsLoading(false);
-      return;
-    }
+    // Always attempt auth check; redirection logic later already ignores /login and /auth/callback when unauthenticated
 
     try {
       const response = await fetch(`${config.api.backendUrl}/auth/verify`, {
@@ -238,15 +237,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Initialize auth state
+  // Initialize auth state on mount and on route change
   useEffect(() => {
-    // Skip initial auth check on login and callback pages
-    if (typeof window !== 'undefined' && (window.location.pathname.includes('/login') || window.location.pathname.includes('/auth/callback'))) {
-      setIsLoading(false);
-      return;
-    }
+    // Whenever the route changes, start an auth verification
+    setIsLoading(true);
     checkAuth();
-  }, []);
+  }, [pathname]);
 
   const login = () => {
     window.location.href = `${config.api.backendUrl}/oauth2/authorization/google`;
