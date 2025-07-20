@@ -107,15 +107,30 @@ export const badgeStyles = {
 
 export const documentBadgeStyles = {
   Important: {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-800 dark:text-red-300'
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    style: {
+      backgroundColor: '#1D5DDF',
+      border: '0.2px solid #628EFF',
+      color: 'white'
+    }
   },
   Events: {
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
-    text: 'text-blue-800 dark:text-blue-300'
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    style: {
+      backgroundColor: '#F3E8FF',
+      border: '0.2px solid #7E22CE',
+      color: '#7E22CE'
+    }
   },
   Administrative: {
-    bg: 'bg-green-100 dark:bg-green-900/30',
-    text: 'text-green-800 dark:text-green-300'
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    style: {
+      backgroundColor: '#15803D',
+      border: '0.2px solid #15803D',
+      color: 'white'
+    }
   },
 } as const
