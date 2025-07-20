@@ -1,17 +1,41 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/auth/use-auth';
+import { config } from '@/lib/configs';
 
-interface Document {
-  id: string;
+// Backend DTO types (partial)
+export interface DocumentCategory {
+  id: number;
+  name: string;
+  normalizedName?: string;
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+}
+
+// Admin response contains more fields
+export interface DocumentResponse {
+  id: number;
   title: string;
-  description: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
+  category: DocumentCategory;
+  allowedUsers: string[];
+  tags: Tag[];
+  latestFilePath: string;
+  versionNumber: number;
+  uploadedAt: string;
+  uploadedBy: string;
   updatedAt: string;
-  version: string;
+}
+
+// User summary response
+export interface DocumentSummary {
+  title: string;
+  category: DocumentCategory;
+  tags: Tag[];
+  latestFilePath: string;
+  uploadedAt: string;
+  updatedAt: string;
 }
 
 interface UseDocumentsOptions {
@@ -19,20 +43,28 @@ interface UseDocumentsOptions {
 }
 
 export function useDocuments({ isAdmin = false }: UseDocumentsOptions = {}) {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<Array<DocumentResponse | DocumentSummary>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { fetchWithAuth } = useAuth();
+
+  const backendBase = config.api.backendUrl;
 
   const fetchDocuments = async () => {
     try {
       setLoading(true);
       setError(null);
-      const endpoint = isAdmin ? '/api/admin/documents' : '/api/documents';
-      const response = await fetchWithAuth(endpoint);
-      
+
+      const endpoint = isAdmin
+        ? `${backendBase}/document/admin/getAll`
+        : `${backendBase}/document/user/getAll`;
+
+      const response = await fetchWithAuth(endpoint, {
+        method: 'GET',
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to fetch documents');
+        throw new Error(`Failed to fetch documents – ${response.status}`);
       }
 
       const data = await response.json();
@@ -44,73 +76,15 @@ export function useDocuments({ isAdmin = false }: UseDocumentsOptions = {}) {
     }
   };
 
-  const createDocument = async (documentData: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const response = await fetchWithAuth('/api/admin/documents', {
-        method: 'POST',
-        body: JSON.stringify(documentData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create document');
-      }
-
-      await fetchDocuments();
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      return false;
-    }
-  };
-
-  const updateDocument = async (id: string, documentData: Partial<Document>) => {
-    try {
-      const response = await fetchWithAuth(`/api/admin/documents/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(documentData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update document');
-      }
-
-      await fetchDocuments();
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      return false;
-    }
-  };
-
-  const deleteDocument = async (id: string) => {
-    try {
-      const response = await fetchWithAuth(`/api/admin/documents/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete document');
-      }
-
-      await fetchDocuments();
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      return false;
-    }
-  };
-
   useEffect(() => {
     fetchDocuments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   return {
     documents,
     loading,
     error,
-    fetchDocuments,
-    createDocument,
-    updateDocument,
-    deleteDocument,
+    refetch: fetchDocuments,
   };
 } 

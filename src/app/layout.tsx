@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Open_Sans, Poppins } from "next/font/google"
+import { Open_Sans, Poppins, Roboto } from "next/font/google"
 import { ErrorBoundary } from "@/components/ui/feedback/error-boundary"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { CacheCleanup } from "@/components/providers/cache-cleanup"
@@ -20,6 +20,14 @@ const poppins = Poppins({
   display: 'swap',
   variable: '--font-poppins',
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  preload: true,
+})
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-roboto',
+  weight: ['400', '500'],
   preload: true,
 })
 
@@ -90,7 +98,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${openSans.variable} ${poppins.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${openSans.variable} ${poppins.variable} ${roboto.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />

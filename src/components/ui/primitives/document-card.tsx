@@ -1,6 +1,6 @@
-import { DocumentIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/ui/primitives/badge';
 import { documentBadgeStyles } from '@/lib/constants';
+import { CustomDocumentIcon } from '@/components/ui/icons/document-icon';
 
 interface DocumentCardProps {
   title: string;
@@ -24,9 +24,7 @@ export function DocumentCard({
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shadow-[0_4px_10px_rgb(59,130,246,0.2)]">
-              <DocumentIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
+            <CustomDocumentIcon />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">

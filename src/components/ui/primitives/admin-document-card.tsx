@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { DocumentIcon, PencilIcon, TrashIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { ArrowTopRightOnSquareIcon, UserIcon } from '@heroicons/react/24/outline';
+import { AdminDocumentIcon, EditIcon, DeleteIcon, CalendarIcon } from '@/components/ui/icons/admin-icons';
 import { VersionHistoryModal } from '@/components/ui/primitives/version-history-modal';
-import { badgeStyles } from '@/lib/constants';
+import { documentBadgeStyles } from '@/lib/constants';
+import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
 
 interface AdminDocumentCardProps {
+  id: number;
   title: string;
   postedDate: string;
   updatedDate: string;
@@ -32,9 +35,19 @@ export function AdminDocumentCard({
   badgeType,
   uploadedBy,
   fileSize = '2.5 MB',
-  versions = []
-}: AdminDocumentCardProps) {
+  versions = [],
+  id,
+  onEdit,
+  onDelete
+}: AdminDocumentCardProps & { onEdit?: (id:number)=>void; onDelete?: (id:number)=>void }) {
   const [showVersions, setShowVersions] = useState(false);
+  const { fetchVersions } = useDocumentAdmin();
+  const [versionList,setVersionList]=useState<any[]>(versions);
+
+  const loadVersions=async()=>{
+    const data=await fetchVersions(id);
+    setVersionList(data);
+  };
 
   // If no versions provided, create a default version from the current document
   const documentVersions = versions.length > 0 ? versions : [
@@ -51,64 +64,45 @@ export function AdminDocumentCard({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)] transition-shadow duration-300">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center shadow-[0_4px_10px_rgb(59,130,246,0.2)]">
-                <DocumentIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow transition-shadow duration-300 hover:shadow-lg cursor-pointer">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3">
+            <AdminDocumentIcon />
+            <div>
+              <div className="flex items-center gap-1 text-[#1A85FF] font-semibold text-lg">
+                <span>{title}</span>
+                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
               </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
-                {title}
-              </h3>
-              <div className="mt-1 flex items-center space-x-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Posted on {postedDate}
-                </span>
-                <span className="text-sm text-gray-400 dark:text-gray-500">•</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  By {uploadedBy}
-                </span>
+              <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                <CalendarIcon className="w-4 h-4" />
+                <span>Posted: {postedDate}</span>
               </div>
             </div>
           </div>
 
-          {/* Right Section */}
-          <div className="flex flex-col items-end space-y-2">
-            <div className={`px-2.5 py-1 rounded-full ${badgeStyles[badgeType].bg} ${badgeStyles[badgeType].text} text-xs font-medium shadow-[0_2px_8px_rgb(0,0,0,0.05)]`}>
-              {badgeType}
+          <div className="flex flex-col items-end gap-2">
+            <div className={`px-2.5 py-1 rounded-full ${documentBadgeStyles[badgeType].bg} ${documentBadgeStyles[badgeType].text} text-xs font-medium`}>{badgeType}</div>
+            <div className="flex items-center gap-2">
+              <button onClick={()=>onEdit?.(id)} className="rounded-full p-1.5 hover:bg-gray-100"><EditIcon/></button>
+              <button onClick={()=>onDelete?.(id)} className="rounded-full p-1.5 hover:bg-gray-100"><DeleteIcon/></button>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <button className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <PencilIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              </button>
-              <button className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <TrashIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              </button>
-            </div>
-
-            <button 
-              onClick={() => setShowVersions(true)}
-              className="text-xs text-[#1A4EFF] dark:text-blue-400 hover:underline"
-            >
-              View Versions
-            </button>
           </div>
         </div>
 
-        {/* Tags Section */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tags.map((tag, index) => (
-            <span 
-              key={index}
-              className="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 shadow-[0_2px_4px_rgb(0,0,0,0.05)]"
-            >
-              {tag}
-            </span>
-          ))}
+        {/* Metadata and Versions link */}
+         <div className="flex items-center justify-between mt-1 text-sm text-gray-500">
+           <div className="flex items-center flex-wrap gap-4">
+             <div className="flex items-center gap-1"><UserIcon className="w-4 h-4"/> {uploadedBy}</div>
+             <div className="uppercase text-xs px-2 py-0.5 bg-gray-100 rounded">{fileType}</div>
+             <div className="flex items-center gap-1"><CalendarIcon className="w-4 h-4"/> Updated: {updatedDate}</div>
+           </div>
+           <button className="text-xs text-[#1A4EFF] underline" onClick={async()=>{await loadVersions(); setShowVersions(true);}}>View Versions</button>
+         </div>
+
+        {/* Tags */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {tags.map((t,i)=>(<span key={i} className="px-2 py-1 rounded-full bg-gray-100 text-xs text-gray-600">#{t}</span>))}
         </div>
       </div>
 
@@ -118,7 +112,15 @@ export function AdminDocumentCard({
         onClose={() => setShowVersions(false)}
         title={title}
         lastUpdated={updatedDate}
-        versions={documentVersions}
+        versions={versionList.map((v:any)=>({
+          title:`${title} V${v.versionNumber}`,
+          updated:new Date(v.uploadedAt).toLocaleDateString(),
+          author:v.uploadedByEmail||uploadedBy,
+          fileType:v.fileUrl.split('.').pop().toUpperCase(),
+          fileSize:'-',
+          access:v.allowedUsers||[],
+          viewUrl:v.fileUrl,
+        }))}
       />
     </>
   );

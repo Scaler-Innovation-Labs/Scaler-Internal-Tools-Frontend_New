@@ -58,8 +58,8 @@ const getMenuItems = (): MenuItem[] => [
   { icon: TicketIcon, label: "Ticket Admin", href: "/ticket-admin", adminOnly: true, group: "support" },
   
   // Document Services
-  { icon: PackageIcon, label: "Documents", href: "/document", group: "documents" },
-  { icon: PackageIcon, label: "Document Admin", href: "/document-admin", adminOnly: true, group: "documents" },
+  { icon: PackageIcon, label: "Documents", href: "/documents", group: "documents" },
+  { icon: PackageIcon, label: "Document Admin", href: "/documents-admin", adminOnly: true, group: "documents" },
   
   // Common Drive Services
   { icon: PackageIcon, label: "Common Drive", href: "/common-drive", group: "common-drive" },

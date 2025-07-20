@@ -95,7 +95,7 @@ export const FILE_UPLOAD = {
   maxFiles: 5,
 } as const
 
-export const documentFilters = ['All', 'PDF', 'DOC', 'XLS', 'IMG'] as const
+export const documentFilters = ['All', 'Academic', 'Events', 'Administrative', 'Important'] as const
 
 export const badgeStyles = {
   PDF: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',

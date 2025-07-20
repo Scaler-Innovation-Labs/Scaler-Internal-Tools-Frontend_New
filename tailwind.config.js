@@ -68,6 +68,7 @@ module.exports = {
       fontFamily: {
         'opensans': ['var(--font-opensans)'],
         'poppins': ['var(--font-poppins)'],
+        'roboto': ['var(--font-roboto)'],
       },
       keyframes: {
         "accordion-down": {
