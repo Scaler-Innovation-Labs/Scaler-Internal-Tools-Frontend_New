@@ -1,11 +1,7 @@
 "use client"
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { MessAdminDashboard } from "@/components/features/mess/admin/mess-admin-dashboard"
 
 export default function MessAdminPage() {
-  return (
-      <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Mess Admin</h1>
-      </div>
-  )
+  return <MessAdminDashboard />
 } 
