@@ -1,13 +1,12 @@
 "use client"
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { MessFoodServices } from "@/components/features/mess/mess-food-services"
 
 export default function MessPage() {
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Mess</h1>
-      </div>
+      <MessFoodServices />
     </DashboardLayout>
   )
 } 
