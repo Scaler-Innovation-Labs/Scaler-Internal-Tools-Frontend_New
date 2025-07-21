@@ -144,3 +144,75 @@ export const vendorApi = {
     return apiCall(`${MESS_API_BASE}/admin/vendor/fetch/${id}`)
   }
 }
+
+// Admin Vendor API (for admin-only vendor management)
+export const vendorAdminApi = {
+  // Get all vendors (admin only)
+  fetchAll: async (): Promise<VendorSummaryDto[]> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendor/fetchAll`)
+  },
+
+  // Get vendor by ID (admin only)
+  fetchById: async (id: number): Promise<VendorSummaryDto> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendor/fetch/${id}`)
+  },
+
+  // Create new vendor (admin only)
+  create: async (vendor: VendorCreateDto): Promise<VendorResponseDto> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendor/create`, {
+      method: 'POST',
+      body: JSON.stringify(vendor)
+    })
+  },
+
+  // Update vendor (admin only)
+  update: async (vendorId: number, vendor: VendorUpdateDto): Promise<VendorResponseDto> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendor/update/${vendorId}`, {
+      method: 'PUT',
+      body: JSON.stringify(vendor)
+    })
+  },
+
+  // Delete vendor (admin only)
+  delete: async (vendorId: number): Promise<string> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendor/delete/${vendorId}`, {
+      method: 'DELETE'
+    })
+  }
+}
+
+// Admin Vendor Plan API (for admin-only vendor plan management)
+export const vendorPlanAdminApi = {
+  // Get all vendor plans (admin only)
+  fetchAll: async (): Promise<VendorPlanSummaryDto[]> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendorPlan/fetchAll`)
+  },
+
+  // Get vendor plan by ID (admin only)
+  fetchById: async (id: number): Promise<VendorPlanSummaryDto> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendorPlan/fetch/${id}`)
+  },
+
+  // Create new vendor plan (admin only)
+  create: async (plan: VendorPlanCreateDto): Promise<VendorPlanResponseDto> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendorPlan/create`, {
+      method: 'POST',
+      body: JSON.stringify(plan)
+    })
+  },
+
+  // Update vendor plan (admin only)
+  update: async (planId: number, plan: VendorPlanUpdateDto): Promise<VendorPlanResponseDto> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendorPlan/update/${planId}`, {
+      method: 'PUT',
+      body: JSON.stringify(plan)
+    })
+  },
+
+  // Delete vendor plan (admin only)
+  delete: async (planId: number): Promise<string> => {
+    return apiCall(`${MESS_API_BASE}/admin/vendorPlan/delete/${planId}`, {
+      method: 'DELETE'
+    })
+  }
+}
