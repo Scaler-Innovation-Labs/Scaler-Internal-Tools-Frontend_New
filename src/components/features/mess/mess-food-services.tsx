@@ -41,7 +41,7 @@ export function MessFoodServices() {
     <div className="min-h-screen bg-blue-50 dark:bg-[#161616] p-6">
       {/* Header Section */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white">
+        <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(90.57deg, #2E4CEE 9.91%, #221EBF 53.29%, #040F75 91.56%)' }}>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold mb-2">Food Services</h1>
@@ -49,10 +49,11 @@ export function MessFoodServices() {
             </div>
             <button
               onClick={handleMessFormNavigation}
-              className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
+              className="px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 text-white"
+              style={{ backgroundColor: '#1A85FF' }}
             >
               <span>📋</span>
-              June Mess From
+              June Mess Form
             </button>
           </div>
         </div>

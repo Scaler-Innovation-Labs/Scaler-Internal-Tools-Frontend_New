@@ -126,7 +126,7 @@ export function MessCart() {
     <div className="min-h-screen bg-blue-50 dark:bg-[#161616] p-6">
       {/* Header */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white">
+        <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(90.57deg, #2E4CEE 9.91%, #221EBF 53.29%, #040F75 91.56%)' }}>
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
