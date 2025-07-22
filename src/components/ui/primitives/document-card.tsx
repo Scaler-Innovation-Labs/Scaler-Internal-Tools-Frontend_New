@@ -1,5 +1,4 @@
-import { Badge } from '@/components/ui/primitives/badge';
-import { documentBadgeStyles } from '@/lib/constants';
+import { useMemo } from 'react';
 import { CustomDocumentIcon } from '@/components/ui/icons/document-icon';
 
 interface DocumentCardProps {
@@ -8,9 +7,10 @@ interface DocumentCardProps {
   fileType: string;
   updatedDate: string;
   tags: string[];
-  badgeType: 'Important' | 'Events' | 'Administrative';
+  categoryName: string;
   uploadedBy?: string;
   fileUrl?: string;
+  [key:string]: any;
 }
 
 const CalendarIcon = ({ className }: { className?: string }) => (
@@ -38,7 +38,7 @@ export function DocumentCard({
   fileType,
   updatedDate,
   tags,
-  badgeType,
+  categoryName,
   uploadedBy,
   fileUrl,
 }: DocumentCardProps) {
@@ -47,6 +47,14 @@ export function DocumentCard({
       window.open(fileUrl, '_blank');
     }
   };
+
+  // deterministic color per category
+  const style = useMemo(()=>{
+    const palette = ['#1D5DDF','#7E22CE','#15803D','#D97706','#0E7490','#DB2777','#92400E'];
+    const hash = Array.from(categoryName).reduce((acc,c)=>acc+c.charCodeAt(0),0);
+    const color = palette[hash % palette.length];
+    return {backgroundColor: color, border:`0.2px solid ${color}`, color:'white'} as React.CSSProperties;
+  },[categoryName]);
 
   return (
     <div 
@@ -74,9 +82,9 @@ export function DocumentCard({
         <div className="flex flex-col items-end gap-2">
           <div 
             className="px-2.5 py-1 rounded-full text-xs font-medium shadow-[0_2px_12px_rgb(0,0,0,0.08)]"
-            style={documentBadgeStyles[badgeType].style}
+            style={style}
           >
-            {badgeType}
+            {categoryName || 'Category'}
           </div>
         </div>
       </div>
@@ -89,31 +97,25 @@ export function DocumentCard({
         </div>
       </div>
 
-      {/* Tags */}
-      {tags && tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2 ml-3">
-          {tags.map((tag, index) => {
-            console.log('Tag:', tag, 'Type:', typeof tag, 'Length:', tag?.length);
-            return (
-              <span 
-                key={index}
-                className="px-2 py-1 rounded-full text-xs shadow-[0_2px_8px_rgb(0,0,0,0.06)]"
-                style={{ 
-                  background: '#E0E0E08C',
-                  fontFamily: 'Open Sans',
-                  fontWeight: 600,
-                  lineHeight: '100%',
-                  letterSpacing: '-3%',
-                  verticalAlign: 'middle',
-                  color: '#4D4D4D'
-                }}
-              >
-                #{tag || 'empty'}
-              </span>
-            );
-          })}
-        </div>
-      )}
+      {/* Tags (always render to keep consistent height) */}
+      <div className="mt-2 flex flex-wrap gap-2 ml-3" style={{minHeight:'28px'}}>
+        {tags && tags.length > 0 && tags.map((tag: string, index: number) => (
+          <span 
+            key={index}
+            className="inline-flex items-center px-2 py-1 rounded-full text-xs shadow-[0_2px_8px_rgb(0,0,0,0.06)]"
+            style={{ 
+              background: '#E0E0E08C',
+              fontFamily: 'Open Sans',
+              fontWeight: 600,
+              letterSpacing: '-3%',
+              verticalAlign: 'middle',
+              color: '#4D4D4D'
+            }}
+          >
+            #{tag || 'empty'}
+          </span>
+        ))}
+      </div>
     </div>
   );
 } 

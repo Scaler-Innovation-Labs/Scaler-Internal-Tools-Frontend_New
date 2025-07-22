@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { UploadArrowIcon } from '@/components/ui/icons/upload-arrow-icon';
 import { Modal } from '@/components/ui/primitives/modal';
@@ -24,24 +24,28 @@ export function CreateDocumentForm({
   tags,
 }: CreateDocumentFormProps) {
   const [title, setTitle] = useState('');
+  // Category related state
   const [selectedCategory, setSelectedCategory] = useState<number | ''>('');
-  const fallbackCategories = [
-    { id: -1, name: 'All' },
-    { id: -2, name: 'Academic' },
-    { id: -3, name: 'Events' },
-    { id: -4, name: 'Administrative' },
-    { id: -5, name: 'Important' }
-  ];
+  // helper state to allow live-search inside an <input list="…" /> element
+  const [categoryInput, setCategoryInput] = useState('');
+  const [showCategoryOptions,setShowCategoryOptions]=useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [showNewCategory, setShowNewCategory] = useState(false);
-  const [selectedTagId, setSelectedTagId] = useState<number | ''>('');
+  // Tag selection helpers
+  const [tagInput, setTagInput] = useState('');
+  const [showTagOptions,setShowTagOptions]=useState(false);
   const [newTag, setNewTag] = useState('');
   const [showNewTag, setShowNewTag] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  // local validation errors
+  const [errors, setErrors] = useState<{ title?: string; category?: string; file?: string; users?: string }>({});
   const userRoles = ['ALL', 'STUDENT', 'SUPER_ADMIN', 'ADMIN', 'BATCH2023'];
   const userBatches = ['BATCH2024', 'BATCH2025', 'BATCH2026', 'BATCH2027', 'BATCH2028'];
   const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
+
+  // remember name of category being created so we can auto-select once list updates
+  const pendingCategoryName = useRef<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -49,15 +53,22 @@ export function CreateDocumentForm({
   };
 
   const handleSubmit = async () => {
-    if (!title || !selectedCategory || !file) {
-      alert('Title, category and file are required');
+    const newErrors: { title?: string; category?: string; file?: string; users?: string } = {};
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!selectedCategory) newErrors.category = 'Category is required';
+    if (!file) newErrors.file = 'File is required';
+    if (allowedUsers.length===0) newErrors.users='Select at least one user';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+    setErrors({});
     onCreate({
       title,
       categoryId: Number(selectedCategory),
       tagIds: selectedTags,
-      file,
+      file: file as File,
       allowedUsers,
     });
   };
@@ -79,6 +90,39 @@ export function CreateDocumentForm({
     });
   };
 
+  const filteredCategories = useMemo(() => {
+    const input = categoryInput.toLowerCase();
+    return categories.filter(c => c.name.toLowerCase().includes(input));
+  }, [categoryInput, categories]);
+
+  // Suggestions while typing in the add-new-category input
+  const filteredNewCategory = useMemo(() => {
+    const input = newCategory.toLowerCase();
+    return categories.filter(c => c.name.toLowerCase().includes(input));
+  }, [newCategory, categories]);
+
+  const filteredTags = useMemo(() => {
+    const input = tagInput.toLowerCase();
+    return tags.filter(t => t.name.toLowerCase().includes(input) && !selectedTags.includes(t.id));
+  }, [tagInput, tags, selectedTags]);
+
+  const filteredNewTag = useMemo(() => {
+    const input = newTag.toLowerCase();
+    return tags.filter(t => t.name.toLowerCase().includes(input));
+  }, [newTag, tags]);
+
+  // effect to auto-select category after categories prop updates
+  useEffect(() => {
+    if (pendingCategoryName.current) {
+      const cat = categories.find(c => c.name.toLowerCase() === pendingCategoryName.current);
+      if (cat) {
+        setSelectedCategory(cat.id);
+        setCategoryInput(cat.name);
+        pendingCategoryName.current = null;
+      }
+    }
+  }, [categories]);
+
   return (
     <Modal id="create-document" isOpen={true} onClose={onClose} className="w-full max-w-xl flex flex-col max-h-[90vh]">
       {/* Header */}
@@ -99,14 +143,15 @@ export function CreateDocumentForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter Document Title"
-            className="w-full p-2.5 border border-gray-200 rounded-lg"
+            className={`w-full p-2.5 border rounded-lg ${errors.title ? 'border-red-500' : 'border-gray-200'}`}
           />
+          {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
         </div>
 
         {/* Upload File */}
         <div className="space-y-1">
           <label className="block font-opensans font-bold text-[16px] leading-none text-gray-900">Upload File</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 h-28 flex flex-col justify-center items-center text-center cursor-pointer" onClick={() => document.getElementById('fileInput')?.click()}>
+          <div className={`border-2 border-dashed rounded-lg p-2 h-28 flex flex-col justify-center items-center text-center cursor-pointer ${errors.file ? 'border-red-500' : 'border-gray-300'}`} onClick={() => document.getElementById('fileInput')?.click()}>
             {file ? (
               <p className="text-gray-700">Selected: {file.name}</p>
             ) : (
@@ -117,27 +162,85 @@ export function CreateDocumentForm({
               </div>
             )}
             <input id="fileInput" type="file" className="hidden" onChange={handleFileChange} />
+            {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file}</p>}
           </div>
         </div>
 
         {/* Category */}
         <div className="space-y-1">
           <label className="block font-opensans font-bold text-[16px] leading-none text-gray-900">Category</label>
-          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value as any)} className="w-full p-2.5 border border-gray-300 rounded-lg bg-white text-gray-900">
-            <option value="">Select Category</option>
-            {(categories.length ? categories : fallbackCategories).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              value={categoryInput}
+              onFocus={()=>setShowCategoryOptions(true)}
+              onChange={(e)=>{const val=e.target.value;setCategoryInput(val);setShowCategoryOptions(true);}}
+              onBlur={()=>setTimeout(()=>setShowCategoryOptions(false),150)}
+              placeholder="Search category..."
+              className={`w-full p-2.5 border rounded-lg ${errors.category ? 'border-red-500' : 'border-gray-300'} bg-white text-gray-900`}
+            />
+            {showCategoryOptions && (
+              <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 max-h-40 overflow-y-auto rounded shadow">
+                {filteredCategories.length===0 && <li className="px-3 py-2 text-gray-500 text-sm">No matches</li>}
+                {filteredCategories.map(c=> (
+                  <li key={c.id} className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm" onMouseDown={()=>{
+                    setSelectedCategory(c.id);setCategoryInput(c.name);setShowCategoryOptions(false);
+                  }}>{c.name}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
 
           <button type="button" className="text-[#1A85FF] text-xs font-opensans font-bold leading-none hover:underline" onClick={() => setShowNewCategory(!showNewCategory)}>
             + Add New Category
           </button>
 
           {showNewCategory && (
-            <div className="flex gap-2 mt-2">
-              <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Category name" className="flex-1 p-2 border border-gray-200 rounded-lg" />
-              <button type="button" onClick={async () => { if(await onCreateCategory(newCategory)){ setNewCategory(''); setShowNewCategory(false);} }} className="px-4 py-1 bg-[#2237EC] text-white text-xs font-medium rounded">Add</button>
+            <div className="relative mt-2">
+              <div className="flex gap-2">
+                <input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Category name"
+                  className="flex-1 p-2 border border-gray-200 rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const trimmed = newCategory.trim();
+                    if (!trimmed) return;
+                    const existing = categories.find((c) => c.name.toLowerCase() === trimmed.toLowerCase());
+                    if (existing) {
+                      setSelectedCategory(existing.id);
+                      setCategoryInput(existing.name);
+                      setNewCategory('');
+                      setShowNewCategory(false);
+                      return;
+                    }
+                    if (await onCreateCategory(trimmed)) {
+                      pendingCategoryName.current = trimmed.toLowerCase();
+                      setNewCategory('');
+                      setShowNewCategory(false);
+                    }
+                  }}
+                  className="px-4 py-1 bg-[#2237EC] text-white text-xs font-medium rounded"
+                >
+                  Add
+                </button>
+              </div>
+              {newCategory && (
+                <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 max-h-32 overflow-y-auto rounded shadow mt-1">
+                  {/* no "No matches" here as requested */}
+                  {filteredNewCategory.map(c => (
+                    <li key={c.id} className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm" onMouseDown={() => {
+                      setSelectedCategory(c.id);
+                      setCategoryInput(c.name);
+                      setNewCategory('');
+                      setShowNewCategory(false);
+                    }}>{c.name}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>
@@ -146,32 +249,50 @@ export function CreateDocumentForm({
         <div className="space-y-1">
           <label className="block font-opensans font-bold text-[16px] leading-none text-gray-900">Tags</label>
           <div className="space-y-2">
-            <select
-              value={selectedTagId}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val) {
-                  const idNum = Number(val);
-                  if (!selectedTags.includes(idNum)) setSelectedTags([...selectedTags, idNum]);
-                  setSelectedTagId('');
-                }
-              }}
-              className="w-full p-2.5 border border-gray-200 rounded-lg bg-white"
-            >
-              <option value="">Select a tag</option>
-              {tags.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+                <input
+                  value={tagInput}
+                  onFocus={()=>setShowTagOptions(true)}
+                  onChange={(e)=>{setTagInput(e.target.value);setShowTagOptions(true);}}
+                  onBlur={()=>setTimeout(()=>setShowTagOptions(false),150)}
+                  placeholder="Search or select tag"
+                  className="w-full p-2 border border-gray-200 rounded-lg"
+                />
+                {showTagOptions && (
+                  <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 max-h-40 overflow-y-auto rounded shadow">
+                    {filteredTags.length===0 && <li className="px-3 py-2 text-gray-500 text-sm">No matches</li>}
+                    {filteredTags.map(t=> (
+                      <li key={t.id} className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm" onMouseDown={()=>{
+                        setSelectedTags(prev=> prev.includes(t.id)?prev:[...prev,t.id]);
+                        setTagInput('');setShowTagOptions(false);
+                      }}>{t.name}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+            {/* suggestions handled by custom dropdown */}
 
             <button type="button" className="text-[#1A85FF] text-xs font-opensans font-bold leading-none hover:underline" onClick={() => setShowNewTag(!showNewTag)}>+ Add New Tag</button>
 
             {showNewTag && (
-              <div className="flex gap-2 mt-2">
-                <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Tag name" className="flex-1 p-2 border border-gray-200 rounded-lg" />
-                <button type="button" onClick={async () => { if(await onCreateTag(newTag)){ setNewTag(''); setShowNewTag(false);} }} className="px-4 py-1 bg-[#2237EC] text-white text-xs font-medium rounded">Add</button>
+              <div className="relative mt-2">
+                <div className="flex gap-2">
+                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Tag name" className="flex-1 p-2 border border-gray-200 rounded-lg" />
+                  <button type="button" onClick={async () => { const trimmed=newTag.trim(); if(!trimmed) return; if(await onCreateTag(trimmed)){ const newly=tags.find(t=>t.name.toLowerCase()===trimmed.toLowerCase()); if(newly && !selectedTags.includes(newly.id)) setSelectedTags([...selectedTags,newly.id]); setNewTag(''); setShowNewTag(false);} }} className="px-4 py-1 bg-[#2237EC] text-white text-xs font-medium rounded">Add</button>
+                </div>
+                {newTag && (
+                  <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 max-h-32 overflow-y-auto rounded shadow mt-1">
+                    {/* no "No matches" here */}
+                    {filteredNewTag.map(t => (
+                      <li key={t.id} className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm" onMouseDown={() => {
+                        if (!selectedTags.includes(t.id)) setSelectedTags([...selectedTags, t.id]);
+                        setNewTag('');
+                        setShowNewTag(false);
+                      }}>{t.name}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 
@@ -198,7 +319,7 @@ export function CreateDocumentForm({
         {/* Allowed Users */}
         <div className="mt-4">
           <label className="block font-opensans font-bold text-[16px] leading-none text-gray-900 mb-2">Allowed Users</label>
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 mb-2">
+          <div className={`grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 mb-2 ${errors.users ? 'border border-red-500 p-2 rounded' : ''}` }>
             {[...userRoles, ...userBatches].map((val) => {
               const checked = allowedUsers.includes(val);
               const allSelected = allowedUsers.includes('ALL');
@@ -219,6 +340,7 @@ export function CreateDocumentForm({
               );
             })}
           </div>
+          {errors.users && <p className="text-red-500 text-xs mt-1">{errors.users}</p>}
         </div>
       </div>
 

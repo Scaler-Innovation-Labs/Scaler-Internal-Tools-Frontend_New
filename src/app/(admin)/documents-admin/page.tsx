@@ -54,6 +54,7 @@ export default function DocumentAdminPage() {
       updatedDate: format(new Date(d.updatedAt), 'dd/MM/yyyy'),
       fileType,
       tags: (d.tags || []).map((t: any) => t.name),
+      categoryName: d.category?.name || '',
       badgeType: mapCategoryToBadge(d.category?.name || ''),
       uploadedBy: d.uploadedBy || 'Admin',
       fileUrl: d.latestFilePath || d.fileUrl,
@@ -65,7 +66,7 @@ export default function DocumentAdminPage() {
   const filteredDocs = transformedDocs.filter((doc) => {
     const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
     if (activeFilter === 'All') return matchesSearch;
-    return matchesSearch && (doc.badgeType === activeFilter || doc.tags.includes(activeFilter));
+    return matchesSearch && (doc.categoryName === activeFilter);
   });
 
   const handleEdit=(id:number)=>{
@@ -129,6 +130,7 @@ export default function DocumentAdminPage() {
 
       <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto mt-6 mb-3">
         <DocumentFilters
+          categories={categories.map(c=>c.name)}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />
@@ -172,6 +174,8 @@ export default function DocumentAdminPage() {
           onUpdate={async(data)=>{const ok=await updateDocument(editDocId!,data);if(ok){setEditDocId(null);setEditInitial(null);refetch();}}}
           categories={categories}
           tags={tags}
+          onCreateCategory={createCategory}
+          onCreateTag={createTag}
           initial={editInitial}
         />
       )}

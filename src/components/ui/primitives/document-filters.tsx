@@ -1,14 +1,14 @@
-import { documentFilters } from '@/lib/constants';
-
 interface DocumentFiltersProps {
+  categories: string[]; // list excluding 'All'
   activeFilter: string;
   onFilterChange: (filter: string) => void;
 }
 
-export function DocumentFilters({ activeFilter, onFilterChange }: DocumentFiltersProps) {
+export function DocumentFilters({ categories, activeFilter, onFilterChange }: DocumentFiltersProps) {
+  const filters = ['All', ...categories];
   return (
     <div className="flex space-x-4 overflow-x-auto scrollbar-hide px-1 py-1">
-      {documentFilters.map((filter) => (
+      {filters.map((filter) => (
         <button
           key={filter}
           onClick={() => onFilterChange(filter)}

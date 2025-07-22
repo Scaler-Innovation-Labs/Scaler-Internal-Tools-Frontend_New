@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ArrowTopRightOnSquareIcon, UserIcon } from '@heroicons/react/24/outline';
 import { AdminDocumentIcon, EditIcon, DeleteIcon, CalendarIcon, ClockIcon } from '@/components/ui/icons/admin-icons';
 import { VersionHistoryModal } from '@/components/ui/primitives/version-history-modal';
-import { documentBadgeStyles } from '@/lib/constants';
 import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
 
 interface AdminDocumentCardProps {
@@ -12,7 +11,7 @@ interface AdminDocumentCardProps {
   updatedDate: string;
   fileType: string;
   tags: string[];
-  badgeType: 'Important' | 'Events' | 'Administrative';
+  categoryName: string;
   uploadedBy: string;
   fileSize?: string;
   fileUrl?: string;
@@ -25,6 +24,7 @@ interface AdminDocumentCardProps {
     access: string[];
     viewUrl: string;
   }>;
+  [key:string]: any;
 }
 
 export function AdminDocumentCard({
@@ -33,7 +33,7 @@ export function AdminDocumentCard({
   updatedDate,
   fileType,
   tags,
-  badgeType,
+  categoryName,
   uploadedBy,
   fileSize = '2.5 MB',
   fileUrl,
@@ -43,6 +43,12 @@ export function AdminDocumentCard({
   onDelete
 }: AdminDocumentCardProps & { onEdit?: (id:number)=>void; onDelete?: (id:number)=>void }) {
   const [showVersions, setShowVersions] = useState(false);
+  const style = useMemo(()=>{
+    const palette=['#1D5DDF','#7E22CE','#15803D','#D97706','#0E7490','#DB2777','#92400E'];
+    const hash=Array.from(categoryName).reduce((a,c)=>a+c.charCodeAt(0),0);
+    const color=palette[hash%palette.length];
+    return {backgroundColor:color,border:`0.2px solid ${color}`,color:'white'} as React.CSSProperties;
+  },[categoryName]);
   const { fetchVersions } = useDocumentAdmin();
   const [versionList,setVersionList]=useState<any[]>(versions);
 
@@ -69,6 +75,7 @@ export function AdminDocumentCard({
       fileType,
       fileSize,
       access: ['Admin', 'Batch2023', 'Batch2027', 'Batch2028'],
+      allowedUsers: (versions[0]?.access)||['Admin'],
       viewUrl: '#'
     }
   ];
@@ -100,9 +107,9 @@ export function AdminDocumentCard({
           <div className="flex flex-col items-end gap-2">
             <div 
               className="px-2.5 py-1 rounded-full text-xs font-medium shadow-[0_2px_12px_rgb(0,0,0,0.08)]"
-              style={documentBadgeStyles[badgeType].style}
+              style={style}
             >
-              {badgeType}
+              {categoryName || 'Category'}
             </div>
             <div className="flex items-center gap-2">
               <button onClick={()=>onEdit?.(id)} className="rounded-full p-1.5 hover:bg-gray-100 shadow-[0_2px_8px_rgb(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgb(0,0,0,0.1)] transition-all duration-200"><EditIcon/></button>
@@ -130,12 +137,12 @@ export function AdminDocumentCard({
            <button className="text-xs text-[#1A4EFF] underline" onClick={async()=>{await loadVersions(); setShowVersions(true);}}>View Versions</button>
          </div>
 
-        {/* Tags */}
-        <div className="mt-2 flex flex-wrap gap-2 ml-3">
+        {/* Tags (consistent height) */}
+        <div className="mt-2 flex flex-wrap gap-2 ml-3" style={{minHeight:'28px'}}>
           {tags.map((t,i)=>(
             <span 
               key={i} 
-              className="px-2 py-1 rounded-full text-xs shadow-[0_2px_8px_rgb(0,0,0,0.06)]" 
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs shadow-[0_2px_8px_rgb(0,0,0,0.06)]" 
               style={{ 
                 background: '#E0E0E08C',
                 fontFamily: 'Open Sans',

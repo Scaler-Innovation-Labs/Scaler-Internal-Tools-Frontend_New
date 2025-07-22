@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useDocuments } from '@/hooks/api/use-documents';
 import { format } from 'date-fns';
 import { DocumentCard } from '@/components/ui/primitives/document-card';
@@ -48,6 +48,7 @@ export default function DocumentPage() {
       fileType,
       updatedDate: format(new Date(d.updatedAt), 'dd/MM/yyyy'),
       tags: tags,
+      categoryName: d.category?.name || '',
       badgeType: mapCategoryToBadge(d.category?.name || ''),
       uploadedBy: d.uploadedBy || 'Admin',
       fileUrl: d.latestFilePath || d.fileUrl,
@@ -61,16 +62,18 @@ export default function DocumentPage() {
     return transformedDoc;
   });
 
-  // Filtering by search and active filter (tag/category)
   const filteredDocs = transformedDocs.filter((doc) => {
     const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
     if (activeFilter === 'All') return matchesSearch;
-    // Filter by badgeType or tag name
-    if (['Academic', 'Events', 'Administrative', 'Important'].includes(activeFilter)) {
-      return matchesSearch && (doc.badgeType === activeFilter || doc.tags.includes(activeFilter));
-    }
-    return matchesSearch;
+    return matchesSearch && (doc.categoryName === activeFilter);
   });
+
+  // derive category list
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    (documents as any[]).forEach(d => { if(d.category?.name) set.add(d.category.name); });
+    return Array.from(set);
+  }, [documents]);
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
@@ -98,6 +101,7 @@ export default function DocumentPage() {
 
       <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto mt-6 mb-3">
         <DocumentFilters
+          categories={categoryOptions}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
         />
