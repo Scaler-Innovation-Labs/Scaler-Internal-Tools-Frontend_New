@@ -85,6 +85,29 @@ If the backend doesn't include the required ID fields, you'll see these user-fri
 1. **"Error: Plan ID is missing. Please contact support."** - When vendorPlanId is missing from vendor plans
 2. **"Error: Vendor ID is missing. Please contact support."** - When vendorId is missing from vendors
 
+## Common 403 Forbidden Error
+
+If you're getting a **403 Forbidden error**, this indicates an authentication/authorization issue:
+
+### Possible Causes:
+1. **User not authenticated** - Session expired or not logged in
+2. **Missing admin permissions** - User doesn't have admin role
+3. **Backend not handling auth correctly** - CORS or authentication middleware issues
+4. **Wrong API endpoint** - Endpoint doesn't exist or has different permissions
+
+### Debug Steps:
+1. **Use the Debug Panel** - Navigate to the Mess Admin Dashboard → Debug tab
+2. **Test Authentication** - Click "Test Authentication" to check auth status
+3. **Test Mess API** - Click "Test Mess API" to test direct API access
+4. **Check Console Logs** - Look for detailed error messages in browser console
+5. **Verify Backend URL** - Ensure `NEXT_PUBLIC_BACKEND_URL` is set correctly
+
+### Quick Fixes:
+- **Re-login**: Try logging out and logging back in
+- **Check Roles**: Ensure the user has admin permissions in the backend
+- **Verify Backend**: Confirm the backend is running and accessible
+- **Check CORS**: Ensure backend allows requests from the frontend domain
+
 ## API Endpoints Expected to Work
 
 Based on `src/lib/api/mess.ts`, these endpoints should be functional:

@@ -1,7 +1,13 @@
 import { config } from '@/lib/configs'
 import type {
   VendorSummaryDto,
+  VendorCreateDto,
+  VendorUpdateDto,
+  VendorResponseDto,
   VendorPlanSummaryDto,
+  VendorPlanCreateDto,
+  VendorPlanUpdateDto,
+  VendorPlanResponseDto,
   VendorPlanSelectionCreateDto,
   VendorPlanSelectionResponseDto,
   VendorPlanHistoryDto,
@@ -16,20 +22,53 @@ const MESS_API_BASE = '/mess'
 
 // Helper function to make API calls with full URL
 const apiCall = async (url: string, options?: RequestInit) => {
-  const response = await fetch(`${config.api.backendUrl}${url}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
+  try {
+    console.log(`Making API call to: ${config.api.backendUrl}${url}`)
+    
+    const response = await fetch(`${config.api.backendUrl}${url}`, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      }
+    })
+
+    console.log(`API Response: ${response.status} ${response.statusText}`)
+
+    if (!response.ok) {
+      let errorMessage = `API call failed: ${response.status}`
+      
+      // Add specific error messages for common status codes
+      switch (response.status) {
+        case 401:
+          errorMessage = 'Authentication required. Please log in again.'
+          break
+        case 403:
+          errorMessage = 'Access forbidden. You may not have permission to access this resource.'
+          break
+        case 404:
+          errorMessage = 'API endpoint not found. The backend may not be running or the endpoint may not exist.'
+          break
+        case 500:
+          errorMessage = 'Internal server error. Please try again later.'
+          break
+        default:
+          errorMessage = `API call failed: ${response.status} ${response.statusText}`
+      }
+      
+      console.error(`API Error: ${errorMessage}`)
+      console.error(`Request URL: ${config.api.backendUrl}${url}`)
+      console.error(`Request method: ${options?.method || 'GET'}`)
+      
+      throw new Error(errorMessage)
     }
-  })
 
-  if (!response.ok) {
-    throw new Error(`API call failed: ${response.status}`)
+    return response.json()
+  } catch (error) {
+    console.error('API call error:', error)
+    throw error
   }
-
-  return response.json()
 }
 
 // Vendor Plan API (User)

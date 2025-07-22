@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/auth/use-auth'
 import { useMessAdmin } from '@/hooks/mess/use-mess-admin'
 import { MessStudentHistory } from './mess-student-history'
 import { MessStudentFeedback } from './mess-student-feedback'
+import { MessDebugPanel } from '../debug/mess-debug-panel'
 import type { 
   VendorCreateDto,
   VendorPlanCreateDto,
@@ -27,7 +28,7 @@ export function MessAdminDashboard() {
     refreshData 
   } = useMessAdmin()
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'vendors' | 'plans' | 'students' | 'feedback' | 'menu'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'vendors' | 'plans' | 'students' | 'feedback' | 'menu' | 'debug'>('debug')
   
   // Debug logging
   console.log('MessAdminDashboard Debug:', {
@@ -243,7 +244,7 @@ export function MessAdminDashboard() {
       <div className="mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-2 shadow-sm">
           <div className="flex gap-2">
-            {(['overview', 'vendors', 'plans', 'students', 'feedback', 'menu'] as const).map((tab) => (
+            {(['overview', 'vendors', 'plans', 'students', 'feedback', 'menu', 'debug'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -441,6 +442,15 @@ export function MessAdminDashboard() {
       {activeTab === 'students' && <MessStudentHistory />}
 
       {activeTab === 'feedback' && <MessStudentFeedback />}
+
+      {activeTab === 'debug' && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+            Debug Panel - Troubleshoot 403 Errors
+          </h2>
+          <MessDebugPanel />
+        </div>
+      )}
 
       {/* Add Vendor Modal */}
       {showAddVendorModal && (
