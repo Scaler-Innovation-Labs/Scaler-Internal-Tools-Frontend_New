@@ -76,9 +76,24 @@ export function MessAdminDashboard() {
     if (!newPlan.planName || !newPlan.vendorName || !newPlan.fee || newPlan.mealTypes.length === 0) return
     
     try {
+      // Find vendor ID by vendor name
+      const selectedVendor = vendors.find(v => v.vendorName === newPlan.vendorName)
+      if (!selectedVendor) {
+        alert('Selected vendor not found')
+        return
+      }
+      
+      // Note: VendorSummaryDto should include vendorId from API
+      const vendorId = (selectedVendor as any).vendorId || 0
+      if (vendorId === 0) {
+        console.error('Vendor ID is missing from API response. Backend team needs to include vendorId in VendorSummaryDto')
+        alert('Error: Vendor ID is missing. Please contact support.')
+        return
+      }
+      
       const planData: VendorPlanCreateDto = {
         planName: newPlan.planName,
-        vendorId: 1, // Mock vendor ID - would need to get actual ID from vendor
+        vendorId: vendorId,
         fee: parseInt(newPlan.fee),
         mealTypes: newPlan.mealTypes as MealType[]
       }
@@ -107,7 +122,22 @@ export function MessAdminDashboard() {
       return
     }
     
-    const success = await deleteVendor(vendorName)
+    // Find vendor ID by vendor name
+    const selectedVendor = vendors.find(v => v.vendorName === vendorName)
+    if (!selectedVendor) {
+      alert('Vendor not found')
+      return
+    }
+    
+    // Note: VendorSummaryDto should include vendorId from API
+    const vendorId = (selectedVendor as any).vendorId || 0
+    if (vendorId === 0) {
+      console.error('Vendor ID is missing from API response. Backend team needs to include vendorId in VendorSummaryDto')
+      alert('Error: Vendor ID is missing. Please contact support.')
+      return
+    }
+    
+    const success = await deleteVendor(vendorId)
     if (!success) {
       alert('Failed to delete vendor')
     }
@@ -118,7 +148,22 @@ export function MessAdminDashboard() {
       return
     }
     
-    const success = await deleteVendorPlan(planName, vendorName)
+    // Find plan ID by plan name and vendor name
+    const selectedPlan = vendorPlans.find(p => p.planName === planName && p.vendorName === vendorName)
+    if (!selectedPlan) {
+      alert('Plan not found')
+      return
+    }
+    
+    // Note: VendorPlanSummaryDto should include vendorPlanId from API
+    const planId = (selectedPlan as any).vendorPlanId || 0
+    if (planId === 0) {
+      console.error('Plan ID is missing from API response. Backend team needs to include vendorPlanId in VendorPlanSummaryDto')
+      alert('Error: Plan ID is missing. Please contact support.')
+      return
+    }
+    
+    const success = await deleteVendorPlan(planId)
     if (!success) {
       alert('Failed to delete plan')
     }

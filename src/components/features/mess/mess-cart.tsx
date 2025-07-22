@@ -40,14 +40,17 @@ export function MessCart() {
     const existingItem = cartItems.find(item => item.planName === plan.planName && item.vendorName === plan.vendorName)
     if (existingItem) return
 
-    // Generate a mock vendor plan ID based on plan name hash
-    const mockVendorPlanId = Math.abs(plan.planName.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0)
-      return a & a
-    }, 0))
+    // Note: The plan should include vendorPlanId from the API
+    // If the API doesn't provide it, the backend team needs to add it
+    const vendorPlanId = (plan as any).vendorPlanId || 0
+    if (vendorPlanId === 0) {
+      console.error('Vendor plan ID is missing from API response. Backend team needs to include vendorPlanId in VendorPlanSummaryDto')
+      alert('Error: Plan ID is missing. Please contact support.')
+      return
+    }
 
     const cartItem: CartItem = {
-      vendorPlanId: mockVendorPlanId,
+      vendorPlanId: vendorPlanId,
       planName: plan.planName,
       vendorName: plan.vendorName,
       fee: plan.fee,
@@ -79,8 +82,8 @@ export function MessCart() {
         return
       }
 
-      // For now, just simulate API call with mock data
-      console.log('Mock submission:', {
+      // Submit to API
+      console.log('Submitting to API:', {
         userId: userData.id,
         cartItems,
         roomNumber,
