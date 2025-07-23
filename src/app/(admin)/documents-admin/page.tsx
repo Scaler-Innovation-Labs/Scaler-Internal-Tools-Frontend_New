@@ -11,6 +11,7 @@ import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
 import { EditDocumentForm } from '@/components/ui/primitives/edit-document-form';
 import React, { useEffect } from 'react';
 import { format } from 'date-fns';
+import { useMemo } from 'react';
 
 const SearchIcon = ({ className }: { className?: string }) => (
   <svg width="22" height="24" viewBox="0 0 22 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -34,9 +35,11 @@ const mapCategoryToBadge = (name: string): 'Important' | 'Events' | 'Administrat
 export default function DocumentAdminPage() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { documents, loading, error, refetch } = useDocuments({ isAdmin: true });
-  const { categories, tags, fetchCategories, fetchTags, createDocument, createCategory, createTag, updateDocument, deleteDocument } = useDocumentAdmin();
+  const { categories, tags, fetchCategories, fetchTags, createDocument, createCategory, createTag, updateDocument, deleteDocument, deleteCategory, deleteTag } = useDocumentAdmin();
   const [editDocId,setEditDocId]=useState<number|null>(null);
   const [editInitial,setEditInitial]=useState<any>(null);
 
@@ -52,6 +55,7 @@ export default function DocumentAdminPage() {
       title: d.title,
       postedDate: format(new Date(d.uploadedAt), 'dd/MM/yyyy'),
       updatedDate: format(new Date(d.updatedAt), 'dd/MM/yyyy'),
+      updatedAtTimestamp: new Date(d.updatedAt).getTime(),
       fileType,
       tags: (d.tags || []).map((t: any) => t.name),
       categoryName: d.category?.name || '',
@@ -63,11 +67,45 @@ export default function DocumentAdminPage() {
     };
   });
 
-  const filteredDocs = transformedDocs.filter((doc) => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
-    if (activeFilter === 'All') return matchesSearch;
-    return matchesSearch && (doc.categoryName === activeFilter);
-  });
+  // Compute category stats from documents
+  const activeCategories = useMemo(() => {
+    const stats = new Map<string, number>();
+    transformedDocs.forEach((doc: any) => {
+      if (doc.categoryName) {
+        stats.set(doc.categoryName, (stats.get(doc.categoryName) || 0) + 1);
+      }
+    });
+    return Array.from(stats.entries())
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+      .map(([name]) => name);
+  }, [transformedDocs]);
+
+  const displayCategories = useMemo(() => {
+    const top5 = activeCategories.slice(0, 5);
+    return activeCategories.length > 5 ? [...top5, 'Others'] : top5;
+  }, [activeCategories]);
+
+  const filteredDocs = useMemo(() => {
+    return transformedDocs
+      .filter((doc: any) => {
+        const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
+        if (selectedCategories.length === 0) {
+          if (activeFilter === 'All') return matchesSearch;
+          if (activeFilter === 'Others') {
+            return matchesSearch && !displayCategories.slice(0, -1).includes(doc.categoryName);
+          }
+          return matchesSearch && doc.categoryName === activeFilter;
+        }
+        return matchesSearch && selectedCategories.includes(doc.categoryName);
+      })
+      .sort((a: any, b: any) => {
+        return sortOrder === 'desc' ? b.updatedAtTimestamp - a.updatedAtTimestamp : a.updatedAtTimestamp - b.updatedAtTimestamp;
+      });
+  }, [transformedDocs, searchQuery, activeFilter, selectedCategories, sortOrder, displayCategories]);
+
+  const handleSortToggle = () => {
+    setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+  };
 
   const handleEdit=(id:number)=>{
     const doc=(documents as any[]).find((x)=>x.id===id);
@@ -130,9 +168,14 @@ export default function DocumentAdminPage() {
 
       <div className="w-full max-w-[95%] xl:max-w-[1400px] px-2 sm:px-4 lg:px-8 mx-auto mt-6 mb-3">
         <DocumentFilters
-          categories={categories.map(c=>c.name)}
+          categories={displayCategories}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
+          allCategories={activeCategories}
+          selectedCategories={selectedCategories}
+          onSelectedCategoriesChange={setSelectedCategories}
+          sortOrder={sortOrder}
+          onSortToggle={handleSortToggle}
         />
       </div>
 
@@ -142,7 +185,7 @@ export default function DocumentAdminPage() {
           {error && <p className="text-center text-red-500 py-6">{error}</p>}
           {!loading && filteredDocs.length === 0 && <p className="text-center text-gray-600 dark:text-gray-300 py-6">No documents found.</p>}
           <div className="space-y-4">
-            {filteredDocs.map((doc, idx) => (
+            {filteredDocs.map((doc: any, idx: number) => (
               <AdminDocumentCard key={idx} {...doc} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
           </div>
@@ -165,6 +208,8 @@ export default function DocumentAdminPage() {
           tags={tags}
           onCreateCategory={createCategory}
           onCreateTag={createTag}
+          onDeleteCategory={deleteCategory}
+          onDeleteTag={deleteTag}
         />
       )}
 
@@ -176,6 +221,8 @@ export default function DocumentAdminPage() {
           tags={tags}
           onCreateCategory={createCategory}
           onCreateTag={createTag}
+          onDeleteCategory={deleteCategory}
+          onDeleteTag={deleteTag}
           initial={editInitial}
         />
       )}

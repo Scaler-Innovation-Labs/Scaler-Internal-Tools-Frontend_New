@@ -51,6 +51,28 @@ export function useDocumentAdmin() {
     }
   }, [backend, fetchWithAuth]);
 
+  const deleteCategory = useCallback(async (id:number):Promise<boolean>=>{
+    try{
+      const res = await fetchWithAuth(`${backend}/document/admin/category/delete/${id}`,{method:'DELETE'});
+      if(res.ok){
+        await fetchCategories();
+        return true;
+      }
+      return false;
+    }catch(e){console.error('deleteCategory',e);return false;}
+  },[backend,fetchWithAuth,fetchCategories]);
+
+  const deleteTag = useCallback(async(id:number):Promise<boolean>=>{
+    try{
+      const res = await fetchWithAuth(`${backend}/document/admin/tag/delete/${id}`,{method:'DELETE'});
+      if(res.ok){
+        await fetchTags();
+        return true;
+      }
+      return false;
+    }catch(e){console.error('deleteTag',e);return false;}
+  },[backend,fetchWithAuth,fetchTags]);
+
   const createDocument = useCallback(async (payload: DocumentCreatePayload): Promise<boolean> => {
     try {
       const form = new FormData();
@@ -150,6 +172,13 @@ export function useDocumentAdmin() {
     }catch(e){console.error('deleteDocument',e);return false;}
   },[backend,fetchWithAuth]);
 
+  const deleteVersion = useCallback(async (versionId:number):Promise<boolean>=>{
+    try{
+      const res = await fetchWithAuth(`${backend}/document/admin/version/delete/${versionId}`,{method:'DELETE'});
+      return res.ok;
+    }catch(e){console.error('deleteVersion',e);return false;}
+  },[backend,fetchWithAuth]);
+
   return {
     categories,
     tags,
@@ -161,5 +190,8 @@ export function useDocumentAdmin() {
     updateDocument,
     fetchVersions,
     deleteDocument,
+    deleteCategory,
+    deleteTag,
+    deleteVersion,
   };
 } 

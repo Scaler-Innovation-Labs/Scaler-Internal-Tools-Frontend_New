@@ -9,6 +9,8 @@ interface CreateDocumentFormProps {
   onCreate: (data: { title: string; categoryId: number; tagIds: number[]; file: File; allowedUsers: string[] }) => void;
   onCreateCategory: (name: string) => Promise<boolean>;
   onCreateTag: (name: string) => Promise<boolean>;
+  onDeleteCategory: (id:number) => Promise<boolean>;
+  onDeleteTag:(id:number)=>Promise<boolean>;
   categories: Category[];
   tags: Tag[];
   loadingCategories?: boolean;
@@ -20,6 +22,8 @@ export function CreateDocumentForm({
   onCreate,
   onCreateCategory,
   onCreateTag,
+  onDeleteCategory,
+  onDeleteTag,
   categories,
   tags,
 }: CreateDocumentFormProps) {
@@ -182,9 +186,14 @@ export function CreateDocumentForm({
               <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 max-h-40 overflow-y-auto rounded shadow">
                 {filteredCategories.length===0 && <li className="px-3 py-2 text-gray-500 text-sm">No matches</li>}
                 {filteredCategories.map(c=> (
-                  <li key={c.id} className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm" onMouseDown={()=>{
-                    setSelectedCategory(c.id);setCategoryInput(c.name);setShowCategoryOptions(false);
-                  }}>{c.name}</li>
+                  <li key={c.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 text-sm" onMouseDown={e=>e.stopPropagation()}>
+                    <span className="cursor-pointer flex-1" onClick={()=>{setSelectedCategory(c.id);setCategoryInput(c.name);setShowCategoryOptions(false);}}>{c.name}</span>
+                    <button type="button" className="ml-2" onClick={async()=>{await onDeleteCategory(c.id);}}>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.25 3.75L3.75 10.25M3.75 3.75L10.25 10.25" stroke="#FF0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </li>
                 ))}
               </ul>
             )}
@@ -262,10 +271,14 @@ export function CreateDocumentForm({
                   <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 max-h-40 overflow-y-auto rounded shadow">
                     {filteredTags.length===0 && <li className="px-3 py-2 text-gray-500 text-sm">No matches</li>}
                     {filteredTags.map(t=> (
-                      <li key={t.id} className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm" onMouseDown={()=>{
-                        setSelectedTags(prev=> prev.includes(t.id)?prev:[...prev,t.id]);
-                        setTagInput('');setShowTagOptions(false);
-                      }}>{t.name}</li>
+                      <li key={t.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 text-sm" onMouseDown={e=>e.stopPropagation()}>
+                        <span className="cursor-pointer flex-1" onClick={()=>{setSelectedTags(prev=> prev.includes(t.id)?prev:[...prev,t.id]); setTagInput('');setShowTagOptions(false);}}>{t.name}</span>
+                        <button type="button" className="ml-2" onClick={async()=>{await onDeleteTag(t.id);}}>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10.25 3.75L3.75 10.25M3.75 3.75L10.25 10.25" stroke="#FF0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 )}

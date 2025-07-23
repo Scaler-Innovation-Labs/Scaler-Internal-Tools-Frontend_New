@@ -1,7 +1,9 @@
 import { XMarkIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import { DeleteIcon } from '@/components/ui/icons/admin-icons';
 import { Modal } from '@/components/ui/primitives/modal';
 
 interface Version {
+  id: number;
   title: string;
   updated: string;
   author: string;
@@ -18,6 +20,7 @@ interface VersionHistoryModalProps {
   title: string;
   lastUpdated: string;
   versions: Version[];
+  onDeleteVersion?: (id:number)=>void;
 }
 
 export function VersionHistoryModal({
@@ -25,7 +28,8 @@ export function VersionHistoryModal({
   onClose,
   title,
   lastUpdated,
-  versions
+  versions,
+  onDeleteVersion,
 }: VersionHistoryModalProps) {
   return (
     <Modal
@@ -65,15 +69,22 @@ export function VersionHistoryModal({
               <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                 {version.title}
               </h3>
-              <a 
-                href={version.viewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-[#1A4EFF] hover:underline text-sm font-medium"
-              >
-                View
-                <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1" />
-              </a>
+              <div className="flex items-center gap-3">
+                <a 
+                  href={version.viewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-[#1A4EFF] hover:underline text-sm font-medium"
+                >
+                  View
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1" />
+                </a>
+                {onDeleteVersion && (
+                  <button onClick={()=>onDeleteVersion(version.id)} className="p-1 rounded hover:bg-gray-100 transition-colors">
+                    <DeleteIcon width={18} height={18} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Info Row 1 */}

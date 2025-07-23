@@ -58,7 +58,7 @@ export function DocumentCard({
 
   return (
     <div 
-      className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-[0_6px_24px_rgb(0,0,0,0.12),0_8px_12px_rgb(0,0,0,0.08)] cursor-pointer border border-gray-100 dark:border-gray-700 mt-4"
+      className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] cursor-pointer border border-gray-100 dark:border-gray-700 mt-4"
       onClick={handleCardClick}
     >
       {/* Header */}

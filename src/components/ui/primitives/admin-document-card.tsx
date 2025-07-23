@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowTopRightOnSquareIcon, UserIcon } from '@heroicons/react/24/outline';
-import { AdminDocumentIcon, EditIcon, DeleteIcon, CalendarIcon, ClockIcon } from '@/components/ui/icons/admin-icons';
+import { AdminDocumentIcon, EditIcon, CalendarIcon, ClockIcon } from '@/components/ui/icons/admin-icons';
 import { VersionHistoryModal } from '@/components/ui/primitives/version-history-modal';
 import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
 
@@ -49,12 +49,28 @@ export function AdminDocumentCard({
     const color=palette[hash%palette.length];
     return {backgroundColor:color,border:`0.2px solid ${color}`,color:'white'} as React.CSSProperties;
   },[categoryName]);
-  const { fetchVersions } = useDocumentAdmin();
+  const { fetchVersions, deleteVersion, deleteDocument } = useDocumentAdmin();
   const [versionList,setVersionList]=useState<any[]>(versions);
 
   const loadVersions=async()=>{
     const data=await fetchVersions(id);
     setVersionList(data);
+  };
+
+  const handleDeleteVersion = async (versionId:number)=>{
+    const success = await deleteVersion(versionId);
+    if(!success) return;
+
+    const latest = await fetchVersions(id);
+    setVersionList(latest);
+
+    if(latest.length === 0){
+      const docDeleted = await deleteDocument(id);
+      if(docDeleted){
+        setShowVersions(false);
+        onDelete?.(id);
+      }
+    }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -166,6 +182,7 @@ export function AdminDocumentCard({
         title={title}
         lastUpdated={updatedDate}
         versions={versionList.map((v:any)=>({
+          id: v.id,
           title:`${title} V${v.versionNumber}`,
           updated:new Date(v.uploadedAt).toLocaleDateString(),
           author:v.uploadedByEmail||uploadedBy,
@@ -174,6 +191,7 @@ export function AdminDocumentCard({
           access:v.allowedUsers||[],
           viewUrl:v.fileUrl,
         }))}
+        onDeleteVersion={handleDeleteVersion}
       />
     </>
   );
