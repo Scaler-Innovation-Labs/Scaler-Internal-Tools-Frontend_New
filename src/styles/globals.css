@@ -248,7 +248,23 @@ a[role="button"] {
 /* Modern print optimizations */
 @media print {
   * {
-    color-adjust: exact;
+    print-color-adjust: exact;
   }
+}
+
+/* Custom animations for chat popup */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
 }
 
