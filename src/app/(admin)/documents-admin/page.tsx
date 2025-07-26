@@ -9,6 +9,7 @@ import { DeleteConfirmationModal } from '@/components/features/document/delete-c
 import { useDocuments } from '@/hooks/api/use-documents';
 import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
 import { EditDocumentForm } from '@/components/features/document/edit-document-form';
+import { ChatPopup } from '@/components/features/chat/chat-popup';
 import React, { useEffect } from 'react';
 import { format } from 'date-fns';
 import { useMemo } from 'react';
@@ -209,6 +210,8 @@ export default function DocumentAdminPage() {
           </div>
         </div>
       </div>
+
+      <ChatPopup />
 
       {showCreateModal && (
         <CreateDocumentForm

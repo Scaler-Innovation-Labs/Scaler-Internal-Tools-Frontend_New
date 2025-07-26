@@ -5,6 +5,7 @@ import { useDocuments } from '@/hooks/api/use-documents';
 import { format } from 'date-fns';
 import { DocumentCard } from '@/components/features/document/document-card';
 import { DocumentFilters } from '@/components/features/document/document-filters';
+import { ChatPopup } from '@/components/features/chat/chat-popup';
 // Removed useCategories hook – derive categories directly from documents
 
 const SearchIcon = ({ className }: { className?: string }) => (
@@ -153,6 +154,7 @@ export default function DocumentPage() {
           </div>
         </div>
       </div>
+      <ChatPopup />
     </div>
   );
 } 
