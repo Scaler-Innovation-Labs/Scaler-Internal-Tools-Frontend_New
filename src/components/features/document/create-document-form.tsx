@@ -47,6 +47,7 @@ export function CreateDocumentForm({
   const userRoles = ['ALL', 'STUDENT', 'SUPER_ADMIN', 'ADMIN', 'BATCH2023'];
   const userBatches = ['BATCH2024', 'BATCH2025', 'BATCH2026', 'BATCH2027', 'BATCH2028'];
   const [allowedUsers, setAllowedUsers] = useState<string[]>([]);
+  const [isDragOver,setIsDragOver]=useState(false);
 
   // remember name of category being created so we can auto-select once list updates
   const pendingCategoryName = useRef<string | null>(null);
@@ -155,7 +156,13 @@ export function CreateDocumentForm({
         {/* Upload File */}
         <div className="space-y-1">
           <label className="block font-opensans font-bold text-[16px] leading-none text-gray-900">Upload File</label>
-          <div className={`border-2 border-dashed rounded-lg p-2 h-28 flex flex-col justify-center items-center text-center cursor-pointer ${errors.file ? 'border-red-500' : 'border-gray-300'}`} onClick={() => document.getElementById('fileInput')?.click()}>
+          <div
+            className={`border-2 border-dashed rounded-lg p-2 h-28 flex flex-col justify-center items-center text-center cursor-pointer ${errors.file ? 'border-red-500' : isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+            onClick={() => document.getElementById('fileInput')?.click()}
+            onDragOver={(e)=>{e.preventDefault();setIsDragOver(true);}}
+            onDragLeave={()=>setIsDragOver(false)}
+            onDrop={(e)=>{e.preventDefault();setIsDragOver(false); if(e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);}}
+          >
             {file ? (
               <p className="text-gray-700">Selected: {file.name}</p>
             ) : (

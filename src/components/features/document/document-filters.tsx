@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 // Svg icons
 const FilterIcon = ({ className }: { className?: string }) => (
@@ -50,6 +50,39 @@ export function DocumentFilters({
 }: DocumentFiltersProps) {
   const filters = ['All', ...categories];
   const [showDropdown, setShowDropdown] = useState(false);
+  // Ref to detect outside clicks
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const applyDropdown = useCallback(() => {
+    setShowDropdown(false);
+    // Update chip selection based on dropdown state
+    if ((selectedCategories || []).length === 1) {
+      const only = selectedCategories[0];
+      if (only) {
+        const mapped = categories.includes(only) ? only : 'Others';
+        onFilterChange(mapped);
+      }
+    } else if ((selectedCategories || []).length === 0) {
+      onFilterChange('All');
+    } else {
+      onFilterChange(''); // no chip active when multi-select
+    }
+  }, [categories, onFilterChange, selectedCategories]);
+
+  // Close dropdown and apply filters when clicking outside
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const handleOutside = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        applyDropdown();
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [showDropdown, applyDropdown]);
 
   // Clicking a chip should also sync the checkbox selection state
   const handleChipClick = (filter: string) => {
@@ -79,24 +112,8 @@ export function DocumentFilters({
     onSelectedCategoriesChange(next);
   };
 
-  const applyDropdown = () => {
-    setShowDropdown(false);
-    // Update chip selection based on dropdown state
-    if ((selectedCategories || []).length === 1) {
-      const only = selectedCategories[0];
-      if (only) {
-        const mapped = categories.includes(only) ? only : 'Others';
-        onFilterChange(mapped);
-      }
-    } else if ((selectedCategories || []).length === 0) {
-      onFilterChange('All');
-    } else {
-      onFilterChange(''); // no chip active when multi-select
-    }
-  };
-
   return (
-    <div className="flex items-center justify-between w-full">
+    <div ref={containerRef} className="flex items-center justify-between w-full">
       {/* Left side: Category chips */}
       <div className="flex items-center space-x-3 overflow-x-auto scrollbar-hide px-1 py-1">
         {filters.map((filter) => (

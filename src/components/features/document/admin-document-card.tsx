@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowTopRightOnSquareIcon, UserIcon } from '@heroicons/react/24/outline';
 import { AdminDocumentIcon, EditIcon, CalendarIcon, ClockIcon } from '@/components/ui/icons/admin-icons';
-import { VersionHistoryModal } from '@/components/ui/primitives/version-history-modal';
+import { VersionHistoryModal } from '@/components/features/document/version-history-modal';
+import { DeleteConfirmationModal } from '@/components/features/document/delete-confirmation-modal';
+import type { VersionPreview } from '@/components/features/document/delete-confirmation-modal';
 import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
 
 interface AdminDocumentCardProps {
@@ -41,25 +43,43 @@ export function AdminDocumentCard({
   id,
   onEdit,
   onDelete
-}: AdminDocumentCardProps & { onEdit?: (id:number)=>void; onDelete?: (id:number)=>void }) {
+}: AdminDocumentCardProps & { onEdit?: (id:number)=>void; onDelete?: (id:number, silent?: boolean)=>void }) {
   const [showVersions, setShowVersions] = useState(false);
   const style = useMemo(()=>{
-    const palette=['#1D5DDF','#7E22CE','#15803D','#D97706','#0E7490','#DB2777','#92400E'];
     const hash=Array.from(categoryName).reduce((a,c)=>a+c.charCodeAt(0),0);
-    const color=palette[hash%palette.length];
-    return {backgroundColor:color,border:`0.2px solid ${color}`,color:'white'} as React.CSSProperties;
+    const hue = hash % 360;
+    const bg = `hsla(${hue},70%,50%,0.15)`;
+    const text = `hsl(${hue},70%,40%)`;
+    return {backgroundColor:bg,color:text} as React.CSSProperties;
   },[categoryName]);
   const { fetchVersions, deleteVersion, deleteDocument } = useDocumentAdmin();
   const [versionList,setVersionList]=useState<any[]>(versions);
+  const [deleteVersionModalOpen,setDeleteVersionModalOpen]=useState(false);
+  const [versionToDelete,setVersionToDelete]=useState<VersionPreview|null>(null);
 
   const loadVersions=async()=>{
     const data=await fetchVersions(id);
     setVersionList(data);
   };
 
-  const handleDeleteVersion = async (versionId:number)=>{
-    const success = await deleteVersion(versionId);
-    if(!success) return;
+  const handleDeleteVersionClick = (versionId:number)=>{
+    const ver = versionList.find((v:any)=>v.id===versionId);
+    if(!ver) return;
+    setVersionToDelete({
+      id: ver.id,
+      title: `${title} V${ver.versionNumber||''}`,
+      updated: new Date(ver.uploadedAt).toLocaleDateString(),
+      author: ver.uploadedByEmail||uploadedBy,
+      fileType: ver.fileUrl.split('.').pop().toUpperCase(),
+      viewUrl: ver.fileUrl,
+    });
+    setDeleteVersionModalOpen(true);
+  };
+
+  const confirmDeleteVersion = async ()=>{
+    if(!versionToDelete) return;
+    const success = await deleteVersion(versionToDelete.id);
+    if(!success) { setDeleteVersionModalOpen(false); return; }
 
     const latest = await fetchVersions(id);
     setVersionList(latest);
@@ -68,9 +88,12 @@ export function AdminDocumentCard({
       const docDeleted = await deleteDocument(id);
       if(docDeleted){
         setShowVersions(false);
-        onDelete?.(id);
+        // directly remove card without extra confirmation popup
+        onDelete?.(id, /*silent*/ true);
       }
     }
+    setDeleteVersionModalOpen(false);
+    setVersionToDelete(null);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -122,7 +145,7 @@ export function AdminDocumentCard({
 
           <div className="flex flex-col items-end gap-2">
             <div 
-              className="px-2.5 py-1 rounded-full text-xs font-medium shadow-[0_2px_12px_rgb(0,0,0,0.08)]"
+              className="inline-flex items-center px-3 py-1.5 rounded-full shadow-[0_2px_12px_rgb(0,0,0,0.08)] !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%]"
               style={style}
             >
               {categoryName || 'Category'}
@@ -191,8 +214,17 @@ export function AdminDocumentCard({
           access:v.allowedUsers||[],
           viewUrl:v.fileUrl,
         }))}
-        onDeleteVersion={handleDeleteVersion}
+        onDeleteVersion={handleDeleteVersionClick}
       />
+
+      {deleteVersionModalOpen && versionToDelete && (
+        <DeleteConfirmationModal
+          isOpen={deleteVersionModalOpen}
+          onClose={()=>{setDeleteVersionModalOpen(false);setVersionToDelete(null);}}
+          onConfirm={confirmDeleteVersion}
+          version={versionToDelete}
+        />
+      )}
     </>
   );
 } 

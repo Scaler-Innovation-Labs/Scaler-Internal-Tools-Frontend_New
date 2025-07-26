@@ -2,6 +2,12 @@ import { XMarkIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outlin
 import { DeleteIcon } from '@/components/ui/icons/admin-icons';
 import { Modal } from '@/components/ui/primitives/modal';
 
+const DocTypeIcon = ({ className }: { className?: string }) => (
+  <svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M8.75 1.75H3.75C3.41848 1.75 3.10054 1.8817 2.86612 2.11612C2.6317 2.35054 2.5 2.66848 2.5 3V13C2.5 13.3315 2.6317 13.6495 2.86612 13.8839C3.10054 14.1183 3.41848 14.25 3.75 14.25H11.25C11.5815 14.25 11.8995 14.1183 12.1339 13.8839C12.3683 13.6495 12.5 13.3315 12.5 13V5.5M8.75 1.75L12.5 5.5M8.75 1.75L8.75 5.5H12.5M10 8.625H5M10 11.125H5M6.25 6.125H5" stroke="#8A8A8A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 interface Version {
   id: number;
   title: string;
@@ -39,7 +45,7 @@ export function VersionHistoryModal({
       className="w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-800"
     >
       {/* Header */}
-      <div className="p-6">
+      <div className="p-5">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -59,11 +65,12 @@ export function VersionHistoryModal({
       </div>
 
       {/* Version List */}
-      <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-100px)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#1A4EFF] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-700">
+      <div className="p-5 space-y-3 overflow-y-auto max-h-[calc(90vh-100px)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#1A4EFF] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-700">
         {versions.map((version, index) => (
           <div 
             key={index}
-            className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3"
+            className="border border-gray-200 dark:border-gray-700 rounded-xl space-y-2"
+            style={{padding:'0.5rem'}}
           >
             <div className="flex items-start justify-between">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -100,7 +107,8 @@ export function VersionHistoryModal({
             </div>
 
             {/* Info Row 2: File type */}
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-semibold mt-1 uppercase">
+            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 font-semibold mt-1 uppercase">
+              <DocTypeIcon className="w-4 h-4" />
               {version.fileType}
             </div>
 

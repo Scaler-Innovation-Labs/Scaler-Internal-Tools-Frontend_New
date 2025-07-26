@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/primitives/button';
-import { PlusIcon } from '@heroicons/react/24/outline';
-import { DocumentFilters } from '@/components/ui/primitives/document-filters';
-import { AdminDocumentCard } from '@/components/ui/primitives/admin-document-card';
-import { CreateDocumentForm } from '@/components/ui/primitives/create-document-form';
+import { DocumentFilters } from '@/components/features/document/document-filters';
+import { AdminDocumentCard } from '@/components/features/document/admin-document-card';
+import { CreateDocumentForm } from '@/components/features/document/create-document-form';
+import { DeleteConfirmationModal } from '@/components/features/document/delete-confirmation-modal';
 import { useDocuments } from '@/hooks/api/use-documents';
 import { useDocumentAdmin } from '@/hooks/api/use-document-admin';
-import { EditDocumentForm } from '@/components/ui/primitives/edit-document-form';
+import { EditDocumentForm } from '@/components/features/document/edit-document-form';
 import React, { useEffect } from 'react';
 import { format } from 'date-fns';
 import { useMemo } from 'react';
@@ -42,6 +42,8 @@ export default function DocumentAdminPage() {
   const { categories, tags, fetchCategories, fetchTags, createDocument, createCategory, createTag, updateDocument, deleteDocument, deleteCategory, deleteTag } = useDocumentAdmin();
   const [editDocId,setEditDocId]=useState<number|null>(null);
   const [editInitial,setEditInitial]=useState<any>(null);
+  const [deleteDoc,setDeleteDoc]=useState<any|null>(null);
+  const [showDeleteModal,setShowDeleteModal]=useState(false);
 
   // Fetch categories and tags on mount
   useEffect(() => {
@@ -114,12 +116,28 @@ export default function DocumentAdminPage() {
     setEditInitial({categoryId:doc.category?.id||'',tagIds:(doc.tags||[]).map((t:any)=>t.id),allowedUsers:doc.allowedUsers||[]});
   };
 
-  const handleDelete=async(id:number)=>{
-    if(!confirm('Are you sure you want to delete this document?')) return;
-    const ok=await deleteDocument(id);
-    if(ok) refetch();
-    else alert('Failed to delete');
+  const handleDeleteRequest=(id:number, silent?:boolean)=>{
+    if(silent){
+      refetch();
+      return;
+    }
+    const doc = transformedDocs.find((d:any)=>d.id===id);
+    if(!doc) return;
+    setDeleteDoc(doc);
+    setShowDeleteModal(true);
   };
+
+  const confirmDelete = useCallback(async () => {
+    if(!deleteDoc) return;
+    const ok = await deleteDocument(deleteDoc.id);
+    if(ok){
+      refetch();
+    }else{
+      alert('Failed to delete');
+    }
+    setShowDeleteModal(false);
+    setDeleteDoc(null);
+  },[deleteDoc, deleteDocument, refetch]);
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[#161616] flex flex-col items-center py-0">
@@ -186,7 +204,7 @@ export default function DocumentAdminPage() {
           {!loading && filteredDocs.length === 0 && <p className="text-center text-gray-600 dark:text-gray-300 py-6">No documents found.</p>}
           <div className="space-y-4">
             {filteredDocs.map((doc: any, idx: number) => (
-              <AdminDocumentCard key={idx} {...doc} onEdit={handleEdit} onDelete={handleDelete} />
+              <AdminDocumentCard key={idx} {...doc} onEdit={handleEdit} onDelete={handleDeleteRequest} />
             ))}
           </div>
         </div>
@@ -224,6 +242,15 @@ export default function DocumentAdminPage() {
           onDeleteCategory={deleteCategory}
           onDeleteTag={deleteTag}
           initial={editInitial}
+        />
+      )}
+
+      {showDeleteModal && deleteDoc && (
+        <DeleteConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={()=>{setShowDeleteModal(false);setDeleteDoc(null);}}
+          onConfirm={confirmDelete}
+          document={deleteDoc}
         />
       )}
     </div>

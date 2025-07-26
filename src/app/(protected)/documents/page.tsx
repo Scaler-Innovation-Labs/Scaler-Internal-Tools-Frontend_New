@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react';
 import { useDocuments } from '@/hooks/api/use-documents';
 import { format } from 'date-fns';
-import { DocumentCard } from '@/components/ui/primitives/document-card';
-import { DocumentFilters } from '@/components/ui/primitives/document-filters';
+import { DocumentCard } from '@/components/features/document/document-card';
+import { DocumentFilters } from '@/components/features/document/document-filters';
 // Removed useCategories hook – derive categories directly from documents
 
 const SearchIcon = ({ className }: { className?: string }) => (

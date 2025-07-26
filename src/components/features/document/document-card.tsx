@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { CustomDocumentIcon } from '@/components/ui/icons/document-icon';
 
-interface DocumentCardProps {
+export interface DocumentCardProps {
   title: string;
   postedDate: string;
   fileType: string;
@@ -10,6 +10,7 @@ interface DocumentCardProps {
   categoryName: string;
   uploadedBy?: string;
   fileUrl?: string;
+  showCategoryBadge?: boolean;
   [key:string]: any;
 }
 
@@ -41,6 +42,7 @@ export function DocumentCard({
   categoryName,
   uploadedBy,
   fileUrl,
+  showCategoryBadge = true,
 }: DocumentCardProps) {
   const handleCardClick = (e: React.MouseEvent) => {
     if (fileUrl) {
@@ -50,10 +52,11 @@ export function DocumentCard({
 
   // deterministic color per category
   const style = useMemo(()=>{
-    const palette = ['#1D5DDF','#7E22CE','#15803D','#D97706','#0E7490','#DB2777','#92400E'];
     const hash = Array.from(categoryName).reduce((acc,c)=>acc+c.charCodeAt(0),0);
-    const color = palette[hash % palette.length];
-    return {backgroundColor: color, border:`0.2px solid ${color}`, color:'white'} as React.CSSProperties;
+    const hue = hash % 360; // 0-359 unique per category
+    const bg = `hsla(${hue},70%,50%,0.15)`;
+    const text = `hsl(${hue},70%,40%)`;
+    return {backgroundColor:bg,color:text} as React.CSSProperties;
   },[categoryName]);
 
   return (
@@ -79,14 +82,16 @@ export function DocumentCard({
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          <div 
-            className="px-2.5 py-1 rounded-full text-xs font-medium shadow-[0_2px_12px_rgb(0,0,0,0.08)]"
-            style={style}
-          >
-            {categoryName || 'Category'}
+        {showCategoryBadge && (
+          <div className="flex flex-col items-end gap-2">
+            <div 
+              className="inline-flex items-center px-3 py-1.5 rounded-full shadow-[0_2px_12px_rgb(0,0,0,0.08)] !font-[var(--font-poppins)] !font-semibold !text-[14px] !leading-[100%]"
+              style={style}
+            >
+              {categoryName || 'Category'}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Metadata */}

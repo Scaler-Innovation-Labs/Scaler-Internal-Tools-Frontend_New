@@ -30,6 +30,7 @@ export function EditDocumentForm({onClose,onUpdate,categories,tags,onCreateCateg
   const [showNewTag,setShowNewTag]=useState(false);
   const [newTag,setNewTag]=useState('');
   const [showNewTagInput,setShowNewTagInput]=useState(false);
+  const [isDragOver,setIsDragOver]=useState(false);
 
   // helper state for searchable category input
   const [categoryInput,setCategoryInput]=useState(initial.categoryId? (categories.find(c=>c.id===initial.categoryId)?.name||'') : '');
@@ -68,7 +69,13 @@ export function EditDocumentForm({onClose,onUpdate,categories,tags,onCreateCateg
       {/* Upload */}
       <div className="space-y-1">
         <label className="block font-opensans font-bold text-[16px] leading-none text-gray-900">Upload File</label>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 h-28 flex flex-col justify-center items-center text-center cursor-pointer" onClick={()=>document.getElementById('fileInputEdit')?.click()}>
+        <div
+          className={`border-2 border-dashed rounded-lg p-2 h-28 flex flex-col justify-center items-center text-center cursor-pointer ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+          onClick={() => document.getElementById('fileInputEdit')?.click()}
+          onDragOver={(e)=>{e.preventDefault();setIsDragOver(true);}}
+          onDragLeave={()=>setIsDragOver(false)}
+          onDrop={(e)=>{e.preventDefault();setIsDragOver(false); if(e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);}}
+        >
           {file? <p>{file.name}</p> : (<><UploadArrowIcon className="w-6 h-6 mb-1"/><p className="text-gray-600 mb-1 text-sm">Drag and drop images here or click to browse</p><p className="text-xs text-gray-500">Supported Formats: PDF, DOC, DOCX, TXT</p></>)}
           <input id="fileInputEdit" type="file" className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f)setFile(f);}}/>
         </div>
