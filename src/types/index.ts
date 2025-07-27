@@ -45,3 +45,6 @@ export interface BusScheduleTableProps {
   loading?: boolean
   className?: string
 }
+
+// Re-export ticket types for easy access
+export * from "./features/tickets"
