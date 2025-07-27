@@ -554,13 +554,6 @@ export const ChatPopup: React.FC = () => {
                           }`}>
                             {msg.content}
                           </p>
-                          {msg.metadata?.timestamp && (
-                            <p className={`text-xs mt-1 opacity-75 ${
-                              msg.messageType === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
-                            }`}>
-                              {formatTime(msg.metadata.timestamp)}
-                            </p>
-                          )}
                         </div>
                         {msg.messageType === 'user' && (
                           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center ml-3">
