@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/primitives/button';
 import { PolicyDocsService } from '@/services/api/policy-docs';
 import { useAuth } from '@/hooks/auth/use-auth';
 import { config } from '@/lib/configs';
+import { usePathname } from 'next/navigation';
 import type { ChatBotDocResponseDto, Message } from '@/types/features/chat';
 
 const SendIcon = () => (
@@ -130,6 +131,10 @@ export const ChatPopup: React.FC = () => {
 
   const { fetchWithAuth, isAuthenticated } = useAuth();
   const backendUrl = config.api.backendUrl;
+  const pathname = usePathname();
+  
+  // Only show settings on admin pages
+  const isAdminPage = pathname?.includes('-admin');
 
   // Function to parse citations from chat response
   const parseCitations = (text: string) => {
@@ -139,15 +144,26 @@ export const ChatPopup: React.FC = () => {
     const citations: Array<{title: string, link: string, page?: string}> = [];
     let cleanText = text;
 
-    // Regex to match citations in both formats: 
-    // (title, Page: X, Link: url.pdf) OR {title, Page: X, Link: url.pdf}
-    // Uses non-greedy matching to handle parentheses in URLs properly
-    const citationRegex = /[\(\{]([^,]+),\s*Page:\s*(\d+),\s*Link:\s*(https?:\/\/.*?\.pdf)[\)\}]/g;
+    // Only proceed if text contains "Source:" - early exit for simple responses
+    if (!text.includes('Source:')) {
+      console.log('No "Source:" found in text, skipping citation parsing');
+      return { cleanText: text, citations: [] };
+    }
+
+    // Regex to match citations in format:
+    // Source: * document_name: title * page_number: X or X, Y * url: url.pdf
+    const citationRegex = /Source:\s*\*\s*document_name:\s*([^*]+?)\s*\*\s*page_number:\s*([^*]+?)\s*\*\s*url:\s*(https?:\/\/.*?)(?:\s*$|\s*\n)/g;
     
     let match;
     while ((match = citationRegex.exec(text)) !== null) {
       console.log('Found citation match:', match);
       const [fullMatch, providedTitle, page, link] = match;
+      
+      // Validate that we have a proper URL
+      if (!link || !link.trim().startsWith('http')) {
+        console.log('Invalid link found, skipping:', link);
+        continue;
+      }
       
       // Extract document title from URL if provided title is not meaningful
       let documentTitle = providedTitle.trim();
@@ -165,9 +181,14 @@ export const ChatPopup: React.FC = () => {
         }
       }
       
+      // Append page number to URL for direct navigation
+      // If multiple pages (e.g. "1, 2"), use the first page number
+      const firstPage = page ? page.trim().split(',')[0].trim() : null;
+      const pageAwareLink = firstPage ? `${link.trim()}#page=${firstPage}` : link.trim();
+      
       citations.push({
         title: documentTitle,
-        link: link.trim(),
+        link: pageAwareLink,
         page: page ? page.trim() : undefined
       });
       
@@ -597,12 +618,14 @@ export const ChatPopup: React.FC = () => {
                       className="w-full px-4 py-3 pr-32 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                      <button
-                        onClick={handleSettingsClick}
-                        className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center transition-all duration-200 hover:scale-105"
-                      >
-                        <SettingsIcon />
-                      </button>
+                      {isAdminPage && (
+                        <button
+                          onClick={handleSettingsClick}
+                          className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        >
+                          <SettingsIcon />
+                        </button>
+                      )}
                       <button
                         onClick={handleSendMessage}
                         disabled={!message.trim() || isSending || !isAuthenticated}

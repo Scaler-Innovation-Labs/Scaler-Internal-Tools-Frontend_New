@@ -114,8 +114,8 @@ export default function TransportDatePage({ params }: TransportDatePageProps) {
             </div>
 
             {error ? (
-              <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 mb-4">
-                <p className="font-medium">Error: {error}</p>
+              <div className="text-gray-500 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 mb-4">
+                <p className="font-medium text-center">No schedules available</p>
               </div>
             ) : (
               <div className="mb-8">
