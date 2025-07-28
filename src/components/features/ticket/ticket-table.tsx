@@ -53,6 +53,19 @@ function formatDate(dateString: string): string {
   return `${day}-${month}-${year}`;
 }
 
+// Helper to format date for display
+function formatDisplayDate(dateString: string | undefined): string {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'N/A';
+  
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
 interface TicketTableProps {
   tickets: TicketSummary[];
   onLike?: (id: number) => void;
@@ -62,7 +75,7 @@ interface TicketTableProps {
 }
 
 export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets }: TicketTableProps) {
-  const { userRoles } = useAuth();
+  const { userRoles, fetchWithAuth } = useAuth();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -82,16 +95,24 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
   }, [userRoles]);
 
   const openEditModal = (ticket: TicketSummary) => {
+    console.log('Opening edit modal for ticket:', ticket);
     setEditTicket(ticket);
-    setEditForm({
+    
+    // Note: resolvedDate is not in the backend DTOs, so we'll handle it separately
+    let formattedResolvedDate = '';
+    
+    const editData = {
       title: ticket.title,
       description: ticket.description,
       priority: ticket.priority,
-      status: ticket.status,
+      status: ticket.ticketStatus, // Map to status for backend
       campus: ticket.campus,
-      isPrivate: ticket.isPrivate,
-      resolvedDate: ticket.resolvedDate || '',
-    });
+      isPrivate: ticket.private, // Match backend DTO field name
+      imageUrl: ticket.imageUrl,
+      resolvedDate: formattedResolvedDate || ''
+    };
+    console.log('Edit form data:', editData);
+    setEditForm(editData);
     setEditError(null);
   };
 
@@ -112,6 +133,9 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
       // Auto-set resolve date when status is changed to RESOLVED
       const today = new Date().toISOString().split('T')[0];
       setEditForm({ ...editForm, [name]: value, resolvedDate: today });
+    } else if (name === 'status' && value !== 'RESOLVED') {
+      // Clear resolved date if status is changed from RESOLVED to something else
+      setEditForm({ ...editForm, [name]: value, resolvedDate: '' });
     } else {
       setEditForm({ ...editForm, [name]: value });
     }
@@ -123,6 +147,7 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
     setEditError(null);
     try {
       if (onEdit && editTicket) {
+        console.log('Submitting edit form data:', editForm);
         await onEdit(editTicket.id, editForm);
       }
       closeEditModal();
@@ -170,13 +195,23 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
 
   const handleResolveTicket = async (ticketId: number) => {
     try {
-      // Update the ticket status to resolved
-      const updateData = {
-        status: 'RESOLVED' as TicketStatus
-      };
+      // Set resolved date to current date
+      const now = new Date();
+      const resolveDate = now.toISOString().split('T')[0]; // Format as YYYY-MM-DD
       
-      // This would use the tickets API service in a real implementation
-      // await updateTicket(ticketId, updateData);
+      // Use the resolve endpoint to properly set the resolved date
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      
+      const response = await fetchWithAuth(`${backendUrl}/api/issues/${ticketId}/resolve`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          ticketStatus: 'RESOLVED',
+          resolvedDate: resolveDate 
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to resolve ticket');
       
       if (refreshTickets) await refreshTickets();
     } catch (err: any) {
@@ -193,6 +228,9 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
   const totalPages = Math.ceil(tickets.length / perPage);
   const paginatedTickets = tickets.slice((page - 1) * perPage, page * perPage);
 
+  // Debug: Log tickets data
+  console.log('Tickets data:', tickets);
+  
   return (
     <div className="space-y-4">
       {paginatedTickets.map((ticket: TicketSummary) => {
@@ -202,7 +240,7 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
         const adminResponses = ticket.adminResponses || (ticket.adminResponse ? [ticket.adminResponse] : []);
         // Temporary mock admin response for testing - remove when backend is ready
         // TODO: Remove this mock data when backend comments/response endpoints are implemented
-        const mockAdminResponses = adminResponses.length === 0 && ticket.status === 'RESOLVED' ? [
+        const mockAdminResponses = adminResponses.length === 0 && ticket.ticketStatus === 'RESOLVED' ? [
           "Thank you for reporting this issue. We have resolved the problem and the fan should now be working properly. Please let us know if you experience any further issues.",
           "The maintenance team has been notified and will address this issue within 24 hours."
         ] : adminResponses;
@@ -223,13 +261,13 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
                 <div className="flex items-center gap-4 text-gray-500 text-sm mt-1">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'N/A'}
+                    {formatDisplayDate(ticket.createdAt)}
                   </span>
                   <span className="font-semibold">Campus:</span> {ticket.campus}
                 </div>
                 <div className="flex gap-2 mt-2 items-center">
                   <span className="border border-blue-500 text-blue-500 px-3 py-0.5 rounded-full text-xs font-semibold bg-white">
-                    {ticket.isPrivate ? 'Private' : 'Public'}
+                    {ticket.private ? 'Private' : 'Public'}
                   </span>
                   {isAdmin && (
                     <button 
@@ -253,8 +291,8 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
                   <span className={`px-2 py-.5 rounded-full text-xs font-semibold border-2 ${priorityColors[ticket.priority]} mr-2`} style={{minWidth: 36, textAlign: 'center'}}>
                     {formatPriority(ticket.priority)}
                   </span>
-                  <span className={`px-2 py-.5 rounded-full text-xs font-semibold border-2 ${statusColors[ticket.status]}`} style={{minWidth: 48, textAlign: 'center'}}>
-                    {formatStatus(ticket.status)}
+                  <span className={`px-2 py-.5 rounded-full text-xs font-semibold border-2 ${statusColors[ticket.ticketStatus]}`} style={{minWidth: 48, textAlign: 'center'}}>
+                    {formatStatus(ticket.ticketStatus)}
                   </span>
                 </div>
                 {/* Bottom row: buttons */}
@@ -262,7 +300,11 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
                   <button 
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-bold px-1.5 py-1 rounded transition" 
                     style={{minWidth: 28}} 
-                    onClick={e => { e.stopPropagation(); onLike && onLike(ticket.id); }}
+                    onClick={e => { 
+                      e.stopPropagation(); 
+                      console.log('Upvoting ticket:', ticket.id, 'Current upvotes:', ticket.upvote);
+                      onLike && onLike(ticket.id); 
+                    }}
                   >
                     <ThumbsUp className="w-4 h-4" />
                     {ticket.upvote || 0}
@@ -287,23 +329,23 @@ export function TicketTable({ tickets, onLike, onDelete, onEdit, refreshTickets 
               <div className="mt-4 space-y-4" onClick={e => e.stopPropagation()}>
                 {/* Description */}
                 <div>
-                  <div className="font-bold mb-1">Description</div>
-                  <div className="text-gray-700 text-sm">
+                  <div className="font-bold mb-1 dark:text-zinc-400">Description</div>
+                  <div className="text-gray-700 text-sm dark:text-zinc-600">
                     {ticket.description}
                   </div>
                 </div>
                 
                 {/* Resolved Date */}
                 <div>
-                  <div className="font-bold mb-1">Resolved Date</div>
+                  <div className="font-bold mb-1 dark:text-zinc-400">Resolved Date</div>
                   <div className="flex items-center gap-2 text-gray-700 text-sm">
                     <Calendar className="w-4 h-4 text-blue-500" />
-                    <span>{ticket.resolvedDate ? formatDate(ticket.resolvedDate) : 'N/A'}</span>
+                    <span>{formatDisplayDate(ticket.resolvedDate)}</span>
                   </div>
                 </div>
                 {/* Attachments */}
                 <div>
-                  <div className="font-bold mb-1">Attachments</div>
+                  <div className="font-bold mb-1 dark:text-zinc-400">Attachments</div>
                   <div className="flex gap-4">
                     {attachments.length > 0 ? attachments.map((img: string, i: number) => (
                       <div key={i} className="flex flex-col items-center">

@@ -28,16 +28,14 @@ export interface Ticket {
   title: string;
   description: string;
   priority: TicketPriority;
-  status: TicketStatus;
+  ticketStatus: TicketStatus; // Changed from status to match backend
   campus: string;
   upvote: number;
   imageUrl: string[];
-  createdBy: string;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
-  isPrivate: boolean;
-  adminResponses?: string[]; // Admin responses/comments
-  adminResponse?: string; // Single admin response (legacy)
+  private: boolean; // Changed from isPrivate to match backend
 }
 
 // Ticket Summary interface matching TicketSummaryDto
@@ -46,10 +44,10 @@ export interface TicketSummary {
   title: string;
   description: string;
   priority: TicketPriority;
-  status: TicketStatus;
+  ticketStatus: TicketStatus; // Changed from status to match backend
   campus: string;
   upvote: number;
-  isPrivate: boolean;
+  private: boolean; // Changed from isPrivate to match backend
   createdAt?: string;
   updatedAt?: string;
   resolvedDate?: string; // Date when ticket was resolved
@@ -65,7 +63,7 @@ export interface TicketCreateData {
   priority: TicketPriority;
   status?: TicketStatus; // Optional, defaults to PENDING
   campus: CampusType;
-  isPrivate?: boolean; // Optional, defaults to false
+  private?: boolean; // Changed from isPrivate to match backend
   imageUrl?: string[]; // Optional
 }
 
@@ -77,7 +75,7 @@ export interface TicketUpdateData {
   status?: TicketStatus;
   campus?: CampusType;
   imageUrl?: string[];
-  isPrivate?: boolean;
+  private?: boolean; // Changed from isPrivate to match backend
   resolvedDate?: string; // Date when ticket was resolved
 }
 

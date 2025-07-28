@@ -56,7 +56,7 @@ export default function TicketOverview() {
 
   return (
     <>
-      <section className="w-full max-w-6xl mx-auto p-6 -mt-10 dark:bg-[#161616]">
+      <section className="w-full max-w-6xl mx-auto p-4 -mt-7 dark:bg-[#161616]">
         <div className="bg-white rounded-2xl shadow-lg px-8 py-5 flex flex-col gap-2 dark:bg-[#161616] border border-gray-600">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Overview</h1>
@@ -103,6 +103,7 @@ export default function TicketOverview() {
           )}
         </div>
       </section>
+
       {/* Create Ticket Modal */}
       {showModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-80">

@@ -40,9 +40,11 @@ class TicketingApiClient {
         const errorData = await response.json();
         errorMessage = errorData.message || errorData.error || errorMessage;
         errorDetails = errorData;
+        console.error('Backend error details:', errorData);
       } catch {
         // If response is not JSON, use status text
         errorMessage = response.statusText || errorMessage;
+        console.error('Backend error status:', response.status, response.statusText);
       }
 
       const error: TicketingApiError = {
@@ -76,6 +78,8 @@ class TicketingApiClient {
 
   // Create new ticket
   async createTicket(ticketData: TicketCreateData): Promise<Ticket> {
+    console.log('Creating ticket with data:', ticketData);
+    
     const response = await this.fetchWithAuth(`${this.baseUrl}/tickets`, {
       method: 'POST',
       headers: {
@@ -83,7 +87,10 @@ class TicketingApiClient {
       },
       body: JSON.stringify(ticketData),
     });
-    return this.handleResponse<Ticket>(response);
+    
+    const result = await this.handleResponse<Ticket>(response);
+    console.log('Ticket created successfully:', result);
+    return result;
   }
 
   // Update ticket

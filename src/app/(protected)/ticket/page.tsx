@@ -45,7 +45,7 @@ export default function TicketsPage() {
   
   // Apply filters
   if (filterStatus !== "all") {
-    filtered = filtered.filter(t => t.status === filterStatus);
+    filtered = filtered.filter(t => t.ticketStatus === filterStatus);
   }
   if (filterPriority !== "all") {
     filtered = filtered.filter(t => t.priority === filterPriority);
@@ -67,7 +67,7 @@ export default function TicketsPage() {
     const order: Record<TicketStatus, number> = { 
       OPEN: 1, IN_PROGRESS: 2, PENDING: 3, ON_HOLD: 4, REOPENED: 5, RESOLVED: 6, CLOSED: 7, CANCELED: 8 
     };
-    sorted.sort((a, b) => order[a.status] - order[b.status]);
+    sorted.sort((a, b) => order[a.ticketStatus] - order[b.ticketStatus]);
   }
 
   const handleUpvote = async (id: number) => {
@@ -136,8 +136,8 @@ export default function TicketsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-purple-50 flex flex-col items-center py-0 dark:bg-[#161616]">
-      <header className="w-full max-w-6xl px-1 sm:px-4 py-3 sm:py-4 rounded-2xl mb-8 shadow-lg" style={{ background: 'linear-gradient(90deg, #2E4CEE 0%, #221EBF 60%, #040F75 100%)' }}>
+    <div className="min-h-screen bg-purple-50 flex flex-col items-center  dark:bg-[#161616]">
+      <header className="w-full max-w-6xl p-4 sm:px-4 mx-2 sm:mx-4 rounded-2xl mb-8 shadow-lg" style={{ background: 'linear-gradient(90deg, #2E4CEE 0%, #221EBF 60%, #040F75 100%)' }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Ticket Status</h1>
@@ -157,7 +157,7 @@ export default function TicketsPage() {
       
       <TicketOverview />
       
-      <section className="w-full max-w-6xl px-2 sm:px-4">
+      <section className="w-full max-w-6xl px-1 sm:px-4 mx-2 sm:mx-4">
         <div className="bg-white rounded-2xl shadow-lg p-1 sm:p-6 dark:bg-[#161616] border border-gray-700 overflow-x-auto">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 gap-1">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-400">Your Tickets</h2>

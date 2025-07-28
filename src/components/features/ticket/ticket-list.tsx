@@ -45,9 +45,9 @@ export default function TicketList({ tickets }: { tickets: TicketSummary[] }) {
               <div className="font-semibold text-[15px] text-blue-900 dark:text-blue-200 flex items-center gap-2">
                 {ticket.title}
                 <Badge variant="outline" className="ml-1 border-blue-200 text-blue-700 bg-blue-50">
-                  {ticket.isPrivate ? 'Private' : 'Public'}
+                  {ticket.private ? 'Private' : 'Public'}
                 </Badge>
-                {ticket.isPrivate && (
+                {ticket.private && (
                   <Button variant="outline" size="sm" className="ml-1 px-2 py-0 h-6 text-xs">
                     Edit
                   </Button>
@@ -66,16 +66,21 @@ export default function TicketList({ tickets }: { tickets: TicketSummary[] }) {
                   </span>
                 )}
                 {/* Show admin response indicator */}
-                {(ticket.adminResponses && ticket.adminResponses.length > 0) || 
-                 (ticket.adminResponse) || 
-                 (ticket.status === 'RESOLVED') ? (
-                  <span className="flex items-center gap-1 text-blue-600">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                {(ticket.ticketStatus === 'RESOLVED') ? (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    Admin Response
-                  </span>
-                ) : null}
+                    <span className="text-sm text-green-600 font-medium">Resolved</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 10V7z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm text-orange-600 font-medium">In Progress</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -88,9 +93,9 @@ export default function TicketList({ tickets }: { tickets: TicketSummary[] }) {
             </Badge>
             <Badge 
               variant="outline" 
-              className={`border ${statusColors[ticket.status] || ''}`}
+              className={`border ${statusColors[ticket.ticketStatus] || ''}`}
             >
-              {formatStatus(ticket.status)}
+              {formatStatus(ticket.ticketStatus)}
             </Badge>
           </div>
         </div>

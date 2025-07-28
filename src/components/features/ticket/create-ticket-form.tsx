@@ -12,9 +12,9 @@ export default function CreateTicketForm({ onSubmit, onCancel, loading = false }
   const [formData, setFormData] = useState<Partial<TicketCreateData>>({
     title: '',
     description: '',
-    priority: 'MEDIUM' as TicketPriority,
-    campus: 'MICRO_CAMPUS' as CampusType,
-    isPrivate: false,
+    priority: undefined,
+    campus: undefined,
+    private: false,
     imageUrl: []
   });
   const [files, setFiles] = useState<File[]>([]);
@@ -48,7 +48,7 @@ export default function CreateTicketForm({ onSubmit, onCancel, loading = false }
       description: formData.description!,
       priority: formData.priority!,
       campus: formData.campus!,
-      isPrivate: formData.isPrivate || false,
+      private: formData.private || false,
       imageUrl: formData.imageUrl || []
     };
 
@@ -65,13 +65,13 @@ export default function CreateTicketForm({ onSubmit, onCancel, loading = false }
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-gray-700 font-semibold mb-2">Issue Title *</label>
+        <label className="block text-gray-700 font-semibold  ">Issue Title *</label>
         <input 
           type="text" 
           value={formData.title || ''} 
           onChange={e => handleInputChange('title', e.target.value)} 
           placeholder="Enter a brief title for your issue" 
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition shadow-sm" 
+          className="w-full border border-gray-300 rounded-lg px-1 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition shadow-sm" 
           required 
         />
       </div>
@@ -86,8 +86,8 @@ export default function CreateTicketForm({ onSubmit, onCancel, loading = false }
             required
           >
             <option value="">Select a campus</option>
-            <option value="MICRO_CAMPUS">Micro Campus</option>
-            <option value="MACRO_CAMPUS">Macro Campus</option>
+            <option value="MICRO_CAMPUS">MICRO_CAMPUS</option>
+            <option value="MACRO_CAMPUS">MACRO_CAMPUS</option>
           </select>
         </div>
         <div>
@@ -197,8 +197,8 @@ export default function CreateTicketForm({ onSubmit, onCancel, loading = false }
           <input 
             type="checkbox" 
             className="sr-only peer" 
-            checked={formData.isPrivate || false}
-            onChange={e => handleInputChange('isPrivate', e.target.checked)}
+            checked={formData.private || false}
+            onChange={e => handleInputChange('private', e.target.checked)}
           />
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 rounded-full peer peer-checked:bg-blue-500 transition"></div>
           <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition peer-checked:translate-x-5"></div>

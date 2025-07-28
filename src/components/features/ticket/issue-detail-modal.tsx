@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from 'react-dom';
 import { useAuth } from "@/hooks/auth/use-auth";
-import type { IssueDetailModalProps } from "@/types/features/tickets";
+import type { IssueDetailModalProps, TicketStatus, TicketPriority } from "@/types/features/tickets";
 import { hasAdminRole } from "@/lib/utils";
 
 export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = false }: IssueDetailModalProps) {
@@ -9,13 +9,13 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
   const isAdmin = hasAdminRole(userRoles);
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    title: issue.title || "",
-    description: issue.description || "",
-    priority: issue.priority || "",
-    status: issue.status || "",
-    assignee: issue.assignee || "",
-    visibility: issue.visibility || "Public",
-    resolvedDate: issue.resolvedDate || ""
+    title: issue.title,
+    description: issue.description,
+    priority: issue.priority || "MEDIUM" as TicketPriority,
+    ticketStatus: issue.ticketStatus || "PENDING" as TicketStatus,
+    campus: issue.campus,
+    private: issue.private || false,
+    imageUrl: issue.imageUrl || []
   });
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -66,10 +66,10 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      const updateData: any = { status: newStatus };
+      const updateData: any = { ticketStatus: newStatus };
       
       // Add resolve date when status is changed to resolved
-      if (newStatus === 'resolved' && !issue.resolvedDate) {
+      if (newStatus === 'RESOLVED') {
         const now = new Date();
         updateData.resolvedDate = now.toISOString().split('T')[0]; // Format as YYYY-MM-DD
       }
@@ -83,7 +83,7 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
       if (!response.ok) throw new Error('Failed to update status');
       
       // Update local state
-      setFormData(prev => ({ ...prev, status: newStatus as any }));
+      setFormData(prev => ({ ...prev, ticketStatus: newStatus as TicketStatus }));
     } catch (err) {
       console.error('Failed to update status:', err);
     }
@@ -99,7 +99,7 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
       
       if (!response.ok) throw new Error('Failed to update assignee');
       
-      setFormData(prev => ({ ...prev, assignee: newAssignee as any }));
+      // Note: assignee is not part of the Ticket interface, so we don't update local state
     } catch (err) {
       console.error('Failed to update assignee:', err);
     }
@@ -153,7 +153,7 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          status: 'resolved',
+          ticketStatus: 'RESOLVED',
           resolvedDate: resolveDate 
         }),
       });
@@ -244,14 +244,15 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                   </label>
                   <select
                     value={formData.priority}
-                    onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as TicketPriority }))}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-[#161616] dark:text-white"
                   >
                     <option value="">Select Priority</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                    <option value="BLOCKER">Blocker</option>
                   </select>
                 </div>
                 
@@ -260,15 +261,19 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                     Status
                   </label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                    value={formData.ticketStatus}
+                    onChange={(e) => setFormData(prev => ({ ...prev, ticketStatus: e.target.value as TicketStatus }))}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-[#161616] dark:text-white"
                   >
                     <option value="">Select Status</option>
-                    <option value="open">Open</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                    <option value="REOPENED">Reopened</option>
+                    <option value="ON_HOLD">On Hold</option>
+                    <option value="CANCELED">Canceled</option>
+                    <option value="PENDING">Pending</option>
                   </select>
                 </div>
               </div>
@@ -310,7 +315,7 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Status:</span>
-                    <span className="font-medium">{issue.status}</span>
+                    <span className="font-medium">{issue.ticketStatus}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Priority:</span>
@@ -321,15 +326,31 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                     <span className="font-medium">{issue.campus}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Date:</span>
-                    <span className="font-medium">{issue.date}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Created:</span>
+                    <span className="font-medium">
+                      {issue.createdAt ? new Date(issue.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      }) : 'N/A'}
+                    </span>
                   </div>
                   {issue.resolvedDate && (
                     <div className="flex justify-between">
                       <span className="text-gray-500 dark:text-gray-400">Resolved Date:</span>
-                      <span className="font-medium">{issue.resolvedDate}</span>
+                      <span className="font-medium">
+                        {new Date(issue.resolvedDate).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Upvotes:</span>
+                    <span className="font-medium">{issue.upvote}</span>
+                  </div>
                 </div>
               </div>
 
@@ -345,14 +366,18 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                         Change Status
                       </label>
                       <select
-                        value={issue.status}
+                        value={issue.ticketStatus}
                         onChange={(e) => handleStatusChange(e.target.value)}
                         className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-[#161616] dark:text-white"
                       >
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="closed">Closed</option>
+                        <option value="OPEN">Open</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="RESOLVED">Resolved</option>
+                        <option value="CLOSED">Closed</option>
+                        <option value="REOPENED">Reopened</option>
+                        <option value="ON_HOLD">On Hold</option>
+                        <option value="CANCELED">Canceled</option>
+                        <option value="PENDING">Pending</option>
                       </select>
                     </div>
                     
@@ -361,7 +386,6 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                         Assign To
                       </label>
                       <select
-                        value={issue.assignee || ""}
                         onChange={(e) => handleAssigneeChange(e.target.value)}
                         className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-[#161616] dark:text-white"
                       >
@@ -373,7 +397,7 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                     </div>
                     
                     {/* Only show image upload if there are existing images */}
-                    {(issue.attachments && issue.attachments.length > 0) && (
+                    {(issue.imageUrl && issue.imageUrl.length > 0) && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Upload Images
@@ -416,7 +440,7 @@ export default function IssueDetailModal({ issue, onClose, isAuthorizedUser = fa
                       </button>
                       
                       {/* Resolve Button */}
-                      {issue.status !== 'resolved' && (
+                      {issue.ticketStatus !== 'RESOLVED' && (
                         <button
                           onClick={handleResolveTicket}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"

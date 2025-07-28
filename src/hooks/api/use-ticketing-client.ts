@@ -75,10 +75,10 @@ export function useTicketingClient(options: UseTicketingClientOptions = {}): Use
   const calculateStats = useCallback((ticketList: TicketSummary[]): TicketStats => {
     const total = ticketList.length;
     const open = ticketList.filter(t => 
-      t.status === 'OPEN' || t.status === 'IN_PROGRESS' || t.status === 'PENDING'
+      t.ticketStatus === 'OPEN' || t.ticketStatus === 'IN_PROGRESS' || t.ticketStatus === 'PENDING'
     ).length;
     const resolved = ticketList.filter(t => 
-      t.status === 'RESOLVED' || t.status === 'CLOSED'
+      t.ticketStatus === 'RESOLVED' || t.ticketStatus === 'CLOSED'
     ).length;
     const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
     
@@ -215,12 +215,12 @@ export function useTicketingClient(options: UseTicketingClientOptions = {}): Use
       
       // Update ticket status in local state
       setTickets(prev => prev.map(ticket => 
-        ticket.id === id ? { ...ticket, status } : ticket
+        ticket.id === id ? { ...ticket, ticketStatus: status } : ticket
       ));
       
       // Recalculate stats
       setStats(prev => calculateStats(tickets.map(ticket => 
-        ticket.id === id ? { ...ticket, status } : ticket
+        ticket.id === id ? { ...ticket, ticketStatus: status } : ticket
       )));
       
       return true;

@@ -78,6 +78,23 @@ export function useTicketsApi() {
     }
   };
 
+  const resolveTicket = async (id: string, resolvedDate: string): Promise<Ticket> => {
+    const response = await fetchWithAuth(`${backendUrl}/api/issues/${id}/resolve`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        ticketStatus: 'RESOLVED',
+        resolvedDate: resolvedDate 
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to resolve ticket');
+    }
+    return response.json();
+  };
+
   const uploadTicketImages = async (id: string, files: File[]): Promise<string[]> => {
     const formData = new FormData();
     files.forEach(file => formData.append('images', file));
@@ -122,6 +139,7 @@ export function useTicketsApi() {
     deleteTicket,
     likeTicket,
     updateTicketStatus,
+    resolveTicket,
     uploadTicketImages,
     addComment,
     getComments,

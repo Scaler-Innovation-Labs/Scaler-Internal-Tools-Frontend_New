@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useTicketsApi } from '@/services/api/tickets';
-import type { Ticket, TicketCreateData, TicketUpdateData, TicketStats } from '@/types/features/tickets';
+import type { Ticket, TicketCreateData, TicketUpdateData, TicketStats, TicketStatus } from '@/types/features/tickets';
 
 interface UseTicketsProps {
   isAdmin?: boolean;
@@ -20,8 +20,8 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
   // Calculate stats from tickets
   const calculateStats = useCallback((ticketList: Ticket[]) => {
     const total = ticketList.length;
-    const open = ticketList.filter(t => t.status === 'open' || t.status === 'Open').length;
-    const resolved = ticketList.filter(t => t.status === 'resolved' || t.status === 'Resolved').length;
+    const open = ticketList.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS' || t.status === 'REOPENED' || t.status === 'ON_HOLD' || t.status === 'PENDING').length;
+    const resolved = ticketList.filter(t => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
     const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
     return { total, open, resolved, resolutionRate };
   }, []);
@@ -78,7 +78,7 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
     }
   }, [ticketsApi, fetchTickets]);
 
-  const updateTicket = useCallback(async (id: string, ticketData: TicketUpdateData) => {
+  const updateTicket = useCallback(async (id: number, ticketData: TicketUpdateData) => {
     if (fetchInProgressRef.current) return null;
     
     try {
@@ -86,7 +86,7 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
       setLoading(true);
       setError(null);
       
-      const result = await ticketsApi.updateTicket(id, ticketData);
+      const result = await ticketsApi.updateTicket(id.toString(), ticketData);
       
       // Refresh tickets to get updated list
       await fetchTickets();
@@ -100,11 +100,11 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
     }
   }, [ticketsApi, fetchTickets]);
 
-  const deleteTicket = useCallback(async (id: string) => {
+  const deleteTicket = useCallback(async (id: number) => {
     try {
       setError(null);
       
-      await ticketsApi.deleteTicket(id);
+      await ticketsApi.deleteTicket(id.toString());
       
       // Remove the deleted ticket from state
       setTickets(prev => prev.filter(ticket => ticket.id !== id));
@@ -117,34 +117,37 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
     }
   }, [ticketsApi, tickets, calculateStats]);
 
-  const likeTicket = useCallback(async (id: string) => {
+  const likeTicket = useCallback(async (id: number) => {
     try {
-      const result = await ticketsApi.likeTicket(id);
+      console.log('Calling likeTicket API for ticket:', id);
+      const result = await ticketsApi.likeTicket(id.toString());
+      console.log('Like API response:', result);
       
       // Update the ticket's likes count in state
       setTickets(prev => prev.map(ticket => 
-        ticket.id === id ? { ...ticket, likes: result.likes } : ticket
+        ticket.id === id ? { ...ticket, upvote: result.likes } : ticket
       ));
       
       return result;
     } catch (err) {
+      console.error('Like ticket error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     }
   }, [ticketsApi]);
 
-  const updateTicketStatus = useCallback(async (id: string, status: string) => {
+  const updateTicketStatus = useCallback(async (id: number, status: TicketStatus) => {
     try {
-      await ticketsApi.updateTicketStatus(id, status);
+      await ticketsApi.updateTicketStatus(id.toString(), status);
       
       // Update the ticket's status in state
       setTickets(prev => prev.map(ticket => 
-        ticket.id === id ? { ...ticket, status: status as any } : ticket
+        ticket.id === id ? { ...ticket, status: status } : ticket
       ));
       
       // Recalculate stats
       setStats(prev => calculateStats(tickets.map(ticket => 
-        ticket.id === id ? { ...ticket, status: status as any } : ticket
+        ticket.id === id ? { ...ticket, status: status } : ticket
       )));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -152,13 +155,13 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
     }
   }, [ticketsApi, tickets, calculateStats]);
 
-  const uploadTicketImages = useCallback(async (id: string, files: File[]) => {
+  const uploadTicketImages = useCallback(async (id: number, files: File[]) => {
     try {
-      const result = await ticketsApi.uploadTicketImages(id, files);
+      const result = await ticketsApi.uploadTicketImages(id.toString(), files);
       
-      // Update the ticket's attachments in state
+      // Update the ticket's imageUrl in state
       setTickets(prev => prev.map(ticket => 
-        ticket.id === id ? { ...ticket, attachments: [...(ticket.attachments || []), ...result] } : ticket
+        ticket.id === id ? { ...ticket, imageUrl: [...(ticket.imageUrl || []), ...result] } : ticket
       ));
       
       return result;
@@ -168,9 +171,9 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
     }
   }, [ticketsApi]);
 
-  const addComment = useCallback(async (id: string, text: string) => {
+  const addComment = useCallback(async (id: number, text: string) => {
     try {
-      const result = await ticketsApi.addComment(id, text);
+      const result = await ticketsApi.addComment(id.toString(), text);
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -178,9 +181,9 @@ export function useTickets({ isAdmin = false }: UseTicketsProps = {}) {
     }
   }, [ticketsApi]);
 
-  const getComments = useCallback(async (id: string) => {
+  const getComments = useCallback(async (id: number) => {
     try {
-      const result = await ticketsApi.getComments(id);
+      const result = await ticketsApi.getComments(id.toString());
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
