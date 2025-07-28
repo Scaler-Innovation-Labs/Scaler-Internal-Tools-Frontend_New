@@ -144,26 +144,35 @@ export const ChatPopup: React.FC = () => {
     const citations: Array<{title: string, link: string, page?: string}> = [];
     let cleanText = text;
 
-    // Only proceed if text contains "Source:" - early exit for simple responses
-    if (!text.includes('Source:')) {
-      console.log('No "Source:" found in text, skipping citation parsing');
+    // Check for both citation formats
+    const hasSourcePrefix = text.includes('Source:');
+    const hasSimpleCitation = text.includes('* document_name:');
+    
+    if (!hasSourcePrefix && !hasSimpleCitation) {
+      console.log('No citation pattern found in text, skipping citation parsing');
       return { cleanText: text, citations: [] };
     }
 
-    // Regex to match citations in format:
-    // Source: * document_name: title * page_number: X or X, Y * url: url.pdf
-    const citationRegex = /Source:\s*\*\s*document_name:\s*([^*]+?)\s*\*\s*page_number:\s*([^*]+?)\s*\*\s*url:\s*(https?:\/\/.*?)(?:\s*$|\s*\n)/g;
+    // Regex to match citations in both formats:
+    // Format 1: Source: * document_name: "title" * page_number: X,Y * url: "url.pdf"
+    // Format 2: * document_name: title * page_number: X * url: url.pdf
+    const citationRegex1 = /Source:\s*\*\s*document_name:\s*"([^"]+)"\s*\*\s*page_number:\s*([^*]+?)\s*\*\s*url:\s*"([^"]+)"/g;
+    const citationRegex2 = /\*\s*document_name:\s*([^*]+?)\s*\*\s*page_number:\s*([^*]+?)\s*\*\s*url:\s*(https?:\/\/[^\s]+)/g;
     
-    let match;
-    while ((match = citationRegex.exec(text)) !== null) {
-      console.log('Found citation match:', match);
-      const [fullMatch, providedTitle, page, link] = match;
-      
-      // Validate that we have a proper URL
-      if (!link || !link.trim().startsWith('http')) {
-        console.log('Invalid link found, skipping:', link);
-        continue;
-      }
+    // Try both regex patterns
+    const regexes = [citationRegex1, citationRegex2];
+    
+    for (const regex of regexes) {
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        console.log('Found citation match:', match);
+        const [fullMatch, providedTitle, page, link] = match;
+        
+        // Validate that we have a proper URL
+        if (!link || !link.trim().startsWith('http')) {
+          console.log('Invalid link found, skipping:', link);
+          continue;
+        }
       
       // Extract document title from URL if provided title is not meaningful
       let documentTitle = providedTitle.trim();
@@ -186,14 +195,15 @@ export const ChatPopup: React.FC = () => {
       const firstPage = page ? page.trim().split(',')[0].trim() : null;
       const pageAwareLink = firstPage ? `${link.trim()}#page=${firstPage}` : link.trim();
       
-      citations.push({
-        title: documentTitle,
-        link: pageAwareLink,
-        page: page ? page.trim() : undefined
-      });
-      
-      // Remove citation from text (including any trailing periods or spaces)
-      cleanText = cleanText.replace(fullMatch, '').replace(/\s*\.\s*$/, '.').trim();
+              citations.push({
+          title: documentTitle,
+          link: pageAwareLink,
+          page: page ? page.trim() : undefined
+        });
+        
+        // Remove citation from text (including any trailing periods or spaces)
+        cleanText = cleanText.replace(fullMatch, '').replace(/\s*\.\s*$/, '.').trim();
+      }
     }
 
     console.log('Parsed citations:', citations);
