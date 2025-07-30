@@ -3,6 +3,7 @@ import { ChatIcon } from '@/components/ui/icons/chat-icon';
 import { Button } from '@/components/ui/primitives/button';
 import { PolicyDocsService } from '@/services/api/policy-docs';
 import { useAuth } from '@/hooks/auth/use-auth';
+import { useUser } from '@/hooks/auth/use-user';
 import { config } from '@/lib/configs';
 import { usePathname } from 'next/navigation';
 import type { ChatBotDocResponseDto, Message } from '@/types/features/chat';
@@ -130,101 +131,25 @@ export const ChatPopup: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { fetchWithAuth, isAuthenticated } = useAuth();
+  const { userData } = useUser();
   const backendUrl = config.api.backendUrl;
   const pathname = usePathname();
   
   // Only show settings on admin pages
   const isAdminPage = pathname?.includes('-admin');
 
-  // Function to parse citations from chat response
-  const parseCitations = (text: string) => {
-    console.log('=== PARSING CITATIONS ===');
-    console.log('Original text:', text);
-    
-    const citations: Array<{title: string, link: string, page?: string}> = [];
-    let cleanText = text;
-
-    // Check for both citation formats
-    const hasSourcePrefix = text.includes('Source:');
-    const hasSimpleCitation = text.includes('* document_name:');
-    
-    if (!hasSourcePrefix && !hasSimpleCitation) {
-      console.log('No citation pattern found in text, skipping citation parsing');
-      return { cleanText: text, citations: [] };
-    }
-
-    // Regex to match citations in both formats:
-    // Format 1: Source: * document_name: "title" * page_number: X,Y * url: "url.pdf"
-    // Format 2: * document_name: title * page_number: X * url: url.pdf
-    const citationRegex1 = /Source:\s*\*\s*document_name:\s*"([^"]+)"\s*\*\s*page_number:\s*([^*]+?)\s*\*\s*url:\s*"([^"]+)"/g;
-    const citationRegex2 = /\*\s*document_name:\s*([^*]+?)\s*\*\s*page_number:\s*([^*]+?)\s*\*\s*url:\s*(https?:\/\/[^\s]+)/g;
-    
-    // Try both regex patterns
-    const regexes = [citationRegex1, citationRegex2];
-    
-    for (const regex of regexes) {
-      let match;
-      while ((match = regex.exec(text)) !== null) {
-        console.log('Found citation match:', match);
-        const [fullMatch, providedTitle, page, link] = match;
-        
-        // Validate that we have a proper URL
-        if (!link || !link.trim().startsWith('http')) {
-          console.log('Invalid link found, skipping:', link);
-          continue;
-        }
-      
-      // Extract document title from URL if provided title is not meaningful
-      let documentTitle = providedTitle.trim();
-      
-      // If title is very short or generic, try to extract from URL
-      if (documentTitle.length < 4 || documentTitle.toLowerCase() === 'hey' || documentTitle.toLowerCase() === 'document' || documentTitle.toLowerCase() === 'dwa') {
-        const urlMatch = link.match(/\/([^\/]+\.pdf)$/);
-        if (urlMatch) {
-          // Extract filename and clean it up
-          const filename = urlMatch[1];
-          // Remove UUID prefix if present (matches pattern: uuid_actualname.pdf)
-          const cleanName = filename.replace(/^[a-f0-9\-]{36}_?/i, '');
-          // Remove .pdf extension and decode URI
-          documentTitle = decodeURIComponent(cleanName.replace(/\.pdf$/i, ''));
-        }
-      }
-      
-      // Append page number to URL for direct navigation
-      // If multiple pages (e.g. "1, 2"), use the first page number
-      const firstPage = page ? page.trim().split(',')[0].trim() : null;
-      const pageAwareLink = firstPage ? `${link.trim()}#page=${firstPage}` : link.trim();
-      
-              citations.push({
-          title: documentTitle,
-          link: pageAwareLink,
-          page: page ? page.trim() : undefined
-        });
-        
-        // Remove citation from text (including any trailing periods or spaces)
-        cleanText = cleanText.replace(fullMatch, '').replace(/\s*\.\s*$/, '.').trim();
-      }
-    }
-
-    console.log('Parsed citations:', citations);
-    console.log('Clean text:', cleanText);
-    console.log('========================');
-
-    return { cleanText, citations };
-  };
-
   // Filter documents based on search query
   const filteredDocuments = documents.filter(doc =>
     doc.documentName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Generate conversation ID based on user session
+  // Generate conversation ID based on user ID
   useEffect(() => {
-    if (isAuthenticated && !conversationId) {
-      // Use timestamp as conversation ID for now - in production you'd use user ID
-      setConversationId(`user_${Date.now()}`);
+    if (isAuthenticated && !conversationId && userData?.id) {
+      // Use actual user ID as conversation ID
+      setConversationId(userData.id.toString());
     }
-  }, [isAuthenticated, conversationId]);
+  }, [isAuthenticated, conversationId, userData?.id]);
 
   // Scroll to bottom when new messages are added
   useEffect(() => {
@@ -270,16 +195,23 @@ export const ChatPopup: React.FC = () => {
       // Send message to backend
       const response = await PolicyDocsService.sendMessage(userMessage, conversationId, fetchWithAuth, backendUrl);
       
-      // Parse citations from the response
-      const { cleanText, citations } = parseCitations(response.answer);
+      // Create citation object from the structured response
+      const citations = [];
+      if (response.document_name && response.document_name !== 'N/A') {
+        citations.push({
+          title: response.document_name,
+          link: response.file_url || '',
+          page: response.page_number !== 'N/A' ? response.page_number : undefined
+        });
+      }
       
       // Add bot response to history
       const botMessage: Message = {
-        content: cleanText,
+        content: response.response,
         messageType: 'assistant',
         metadata: { 
           timestamp: new Date().toISOString(),
-          citations: citations
+          citations: citations.length > 0 ? citations : undefined
         }
       };
 

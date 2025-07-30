@@ -10,9 +10,10 @@ export interface ChatBotDocCreateDto {
 }
 
 export interface ChatResponse {
-  conversationId: string;
-  answer: string;
-  history: Message[];
+  response: string;
+  document_name: string;
+  page_number: string;
+  file_url: string;
 }
 
 export interface Message {
